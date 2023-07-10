@@ -2,7 +2,7 @@
 Waffle puzzles are basically 2D Wordle puzzles for which you must swap letters. I find optimal (fewest swap) solutions to waffles of various sizes!
 
 The puzzles...  
-[https://wafflegame.net/daily](https://wafflegame.net/daily) is solved by waffle5.py
+[https://wafflegame.net/daily](https://wafflegame.net/daily) is solved by waffle5.py  
 [https://wafflegame.net/deluxe](https://wafflegame.net/deluxe) is solved by waffle7.py
 
 Waffle puzzles are not super difficult by hand, though writing the code was a bit tricky (that is to say, fun!).

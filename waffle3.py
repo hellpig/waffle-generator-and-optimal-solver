@@ -45,7 +45,7 @@ m..
 . .
 ...
 
-'''
+'''.strip().lower()
 
 
 # Capital letters mean yellow
@@ -56,7 +56,7 @@ mhA
 h a
 APS
 
-'''
+'''.strip()
 
 
 
@@ -65,8 +65,6 @@ APS
 ###### find the possibilities for each of the words
 #################################################
 
-greenMaskAll = greenMaskAll.strip().lower()
-lettersAll = lettersAll.strip()
 
 # make countsAll
 countsAll = {}
@@ -81,19 +79,15 @@ wordListAll = []
 for wordNum in range(nl+1):
 
 
-    # take the correct slice
-    if wordNum == 0:
-      greenMask = greenMaskAll[0:nl]
-      letters = lettersAll[0:nl]
-    elif wordNum == 1:
-      greenMask = greenMaskAll[2*nl+2:3*nl+2]
-      letters = lettersAll[2*nl+2:3*nl+2]
-    elif wordNum == 2:
-      greenMask = greenMaskAll[0::nl+1]
-      letters = lettersAll[0::nl+1]
-    else:   #3
-      greenMask = greenMaskAll[2::nl+1]
-      letters = lettersAll[2::nl+1]
+    # take the correct slice (assume odd nl)
+    if wordNum <= nl//2:   # horizontal words
+      start = 2 * wordNum * (nl+1)
+      greenMask = greenMaskAll[ start : start+nl ]
+      letters = lettersAll[ start : start+nl ]
+    else:
+      start = 2 * (wordNum - 1 - nl//2)
+      greenMask = greenMaskAll[ start :: nl+1 ]
+      letters = lettersAll[ start :: nl+1 ]
 
 
     # make counts
@@ -222,36 +216,44 @@ for wordNum in range(nl+1):
 ###### see which combinations work to get solution
 #################################################
 
+
+# recursive function to handle the variable number of for loops (depends on nl)
+def loop_recursive(w, n):
+  global solution
+
+  if n <= nl:   # there are nl+1 words
+      for _,word in wordListAll[n]:
+        temp = w[:]
+        temp.append(word)
+        loop_recursive(temp, n + 1)
+
+  else:
+
+      # check waffle shape
+      if w[0][0::2] != w[2][0] + w[3][0]:
+        return
+      if w[1][0::2] != w[2][2] + w[3][2]:
+        return
+
+      # check counts
+      letters = w[0] + w[1] + w[2][1::2] + w[3][1::2]
+      for i in set(letters):
+        if letters.count(i) != countsAll[i]:
+          return
+
+      print()
+      print(" ", w[0])
+      print(" ", w[2][1] + " " + w[3][1])
+      print(" ", w[1])
+      print("      ", w[0], w[1], w[2], w[3])
+      print()
+
+      solution = w[0] + "\n" + w[2][1] + " " + w[3][1] + "\n" + w[1]
+
+
 solution = False
 
-for _,w0 in wordListAll[0]:
-  for _,w1 in wordListAll[1]:
-    for _,w2 in wordListAll[2]:
-      for _,w3 in wordListAll[3]:
-
-                # check waffle shape
-                if w0[0::2] != w2[0] + w3[0]:
-                  continue
-                if w1[0::2] != w2[2] + w3[2]:
-                  continue
-
-                # check counts
-                letters = w0 + w1 + w2[1::2] + w3[1::2]
-                works = True
-                for i in 'abcdefghijklmnopqrstuvwxyz':
-                  if letters.count(i) != countsAll[i]:
-                    works = False
-                    break
-                if works:
-                  print()
-                  print(" ", w0)
-                  print(" ", w2[1] + " " + w3[1])
-                  print(" ", w1)
-                  print("      ", w0, w1, w2, w3)
-                  print()
-
-                  solution = w0 + "\n" + w2[1] + " " + w3[1] + "\n" + w1
-
+loop_recursive([], 0)
 
 if not solution:
   exit()
@@ -264,7 +266,7 @@ if not solution:
 # remove greens from solution and lettersAll and make them into lists
 solution = list(solution)
 lettersAll = list(lettersAll.lower())
-waffleIndices = []   # used for printing the Waffle
+waffleIndices = []   # used for printing on the Waffle
 for i in range(len(greenMaskAll)):
   if greenMaskAll[i].isalpha():
     solution[i] = " "
@@ -276,7 +278,9 @@ lettersAll_string = "".join(lettersAll).replace(' ', '').replace('\n', '')
 solution = list(solution_string)
 lettersAll = list(lettersAll_string)
 
-blank = "...\n. .\n..."
+# make blank board for printing swaps (assume odd nl)
+temp = "." * nl + "\n" + ". " * (nl//2) + ".\n"
+blank = temp * (nl//2) + "." * nl
 
 def printSwap(li, lj, i, j):
   li = li[0]

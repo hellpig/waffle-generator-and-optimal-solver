@@ -51,7 +51,7 @@ e.i.e.t
 . . . .
 ..g.t..
 
-'''
+'''.strip().lower()
 
 
 # Capital letters mean yellow
@@ -66,7 +66,7 @@ eNieeet
 e a E g
 HlgEtIS
 
-'''
+'''.strip()
 
 
 
@@ -75,8 +75,6 @@ HlgEtIS
 ###### find the possibilities for each of the words
 #################################################
 
-greenMaskAll = greenMaskAll.strip().lower()
-lettersAll = lettersAll.strip()
 
 # make countsAll
 countsAll = {}
@@ -91,31 +89,15 @@ wordListAll = []
 for wordNum in range(nl+1):
 
 
-    # take the correct slice
-    if wordNum == 0:
-      greenMask = greenMaskAll[0:nl]
-      letters = lettersAll[0:nl]
-    elif wordNum == 1:
-      greenMask = greenMaskAll[2*nl+2:3*nl+2]
-      letters = lettersAll[2*nl+2:3*nl+2]
-    elif wordNum == 2:
-      greenMask = greenMaskAll[4*nl+4:5*nl+4]
-      letters = lettersAll[4*nl+4:5*nl+4]
-    elif wordNum == 3:
-      greenMask = greenMaskAll[6*nl+6:7*nl+6]
-      letters = lettersAll[6*nl+6:7*nl+6]
-    elif wordNum == 4:
-      greenMask = greenMaskAll[0::nl+1]
-      letters = lettersAll[0::nl+1]
-    elif wordNum == 5:
-      greenMask = greenMaskAll[2::nl+1]
-      letters = lettersAll[2::nl+1]
-    elif wordNum == 6:
-      greenMask = greenMaskAll[4::nl+1]
-      letters = lettersAll[4::nl+1]
-    else:   #7
-      greenMask = greenMaskAll[6::nl+1]
-      letters = lettersAll[6::nl+1]
+    # take the correct slice (assume odd nl)
+    if wordNum <= nl//2:   # horizontal words
+      start = 2 * wordNum * (nl+1)
+      greenMask = greenMaskAll[ start : start+nl ]
+      letters = lettersAll[ start : start+nl ]
+    else:
+      start = 2 * (wordNum - 1 - nl//2)
+      greenMask = greenMaskAll[ start :: nl+1 ]
+      letters = lettersAll[ start :: nl+1 ]
 
 
     # make counts
@@ -244,48 +226,52 @@ for wordNum in range(nl+1):
 ###### see which combinations work to get solution
 #################################################
 
+
+# recursive function to handle the variable number of for loops (depends on nl)
+def loop_recursive(w, n):
+  global solution
+
+  if n <= nl:   # there are nl+1 words
+      for _,word in wordListAll[n]:
+        temp = w[:]
+        temp.append(word)
+        loop_recursive(temp, n + 1)
+
+  else:
+
+      # check waffle shape
+      if w[0][0::2] != w[4][0] + w[5][0] + w[6][0] + w[7][0]:
+        return
+      if w[1][0::2] != w[4][2] + w[5][2] + w[6][2] + w[7][2]:
+        return
+      if w[2][0::2] != w[4][4] + w[5][4] + w[6][4] + w[7][4]:
+        return
+      if w[3][0::2] != w[4][6] + w[5][6] + w[6][6] + w[7][6]:
+        return
+
+      # check counts
+      letters = w[0] + w[1] + w[2] + w[3] + w[4][1::2] + w[5][1::2] + w[6][1::2] + w[7][1::2]
+      for i in set(letters):
+        if letters.count(i) != countsAll[i]:
+          return
+
+      print()
+      print(" ", w[0])
+      print(" ", w[4][1] + " " + w[5][1] + " " + w[6][1] + " " + w[7][1])
+      print(" ", w[1])
+      print(" ", w[4][3] + " " + w[5][3] + " " + w[6][3] + " " + w[7][3])
+      print(" ", w[2])
+      print(" ", w[4][5] + " " + w[5][5] + " " + w[6][5] + " " + w[7][5])
+      print(" ", w[3])
+      print("      ", w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7])
+      print()
+
+      solution = w[0] + "\n" + w[4][1] + " " + w[5][1] + " " + w[6][1] + " " + w[7][1] + "\n" + w[1] + "\n" + w[4][3] + " " + w[5][3] + " " + w[6][3] + " " + w[7][3] + "\n" + w[2] + "\n" + w[4][5] + " " + w[5][5] + " " + w[6][5] + " " + w[7][5] + "\n" + w[3]
+
+
 solution = False
 
-for _,w0 in wordListAll[0]:
-  for _,w1 in wordListAll[1]:
-    for _,w2 in wordListAll[2]:
-      for _,w3 in wordListAll[3]:
-        for _,w4 in wordListAll[4]:
-          for _,w5 in wordListAll[5]:
-            for _,w6 in wordListAll[6]:
-              for _,w7 in wordListAll[7]:
-
-                # check waffle shape
-                if w0[0::2] != w4[0] + w5[0] + w6[0] + w7[0]:
-                  continue
-                if w1[0::2] != w4[2] + w5[2] + w6[2] + w7[2]:
-                  continue
-                if w2[0::2] != w4[4] + w5[4] + w6[4] + w7[4]:
-                  continue
-                if w3[0::2] != w4[6] + w5[6] + w6[6] + w7[6]:
-                  continue
-
-                # check counts
-                letters = w0 + w1 + w2 + w3 + w4[1::2] + w5[1::2] + w6[1::2] + w7[1::2]
-                works = True
-                for i in 'abcdefghijklmnopqrstuvwxyz':
-                  if letters.count(i) != countsAll[i]:
-                    works = False
-                    break
-                if works:
-                  print()
-                  print(" ", w0)
-                  print(" ", w4[1] + " " + w5[1] + " " + w6[1] + " " + w7[1])
-                  print(" ", w1)
-                  print(" ", w4[3] + " " + w5[3] + " " + w6[3] + " " + w7[3])
-                  print(" ", w2)
-                  print(" ", w4[5] + " " + w5[5] + " " + w6[5] + " " + w7[5])
-                  print(" ", w3)
-                  print("      ", w0, w1, w2, w3, w4, w5, w6, w7)
-                  print()
-
-                  solution = w0 + "\n" + w4[1] + " " + w5[1] + " " + w6[1] + " " + w7[1] + "\n" + w1 + "\n" + w4[3] + " " + w5[3] + " " + w6[3] + " " + w7[3] + "\n" + w2 + "\n" + w4[5] + " " + w5[5] + " " + w6[5] + " " + w7[5] + "\n" + w3
-
+loop_recursive([], 0)
 
 if not solution:
   exit()
@@ -298,7 +284,7 @@ if not solution:
 # remove greens from solution and lettersAll and make them into lists
 solution = list(solution)
 lettersAll = list(lettersAll.lower())
-waffleIndices = []   # used for printing the Waffle
+waffleIndices = []   # used for printing on the Waffle
 for i in range(len(greenMaskAll)):
   if greenMaskAll[i].isalpha():
     solution[i] = " "
@@ -310,7 +296,9 @@ lettersAll_string = "".join(lettersAll).replace(' ', '').replace('\n', '')
 solution = list(solution_string)
 lettersAll = list(lettersAll_string)
 
-blank = ".......\n. . . .\n.......\n. . . .\n.......\n. . . .\n......."
+# make blank board for printing swaps (assume odd nl)
+temp = "." * nl + "\n" + ". " * (nl//2) + ".\n"
+blank = temp * (nl//2) + "." * nl
 
 def printSwap(li, lj, i, j):
   li = li[0]

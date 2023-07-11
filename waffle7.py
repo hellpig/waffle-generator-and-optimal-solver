@@ -40,7 +40,7 @@ dataLong.clear()  # free up RAM
 #################################################
 
 # A '.' is a placeholder for when the letter is unknown.
-# The four spaces (' ') are for the four holes in waffle shape.
+# The spaces (' ') are for the holes in the waffle shape.
 greenMaskAll = '''
 
 ..t.n..

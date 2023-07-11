@@ -3,7 +3,7 @@ Waffle puzzles are basically 2D Wordle puzzles for which you must swap letters. 
 
 The puzzles...  
 [https://wafflegame.net/daily](https://wafflegame.net/daily) is solved by waffle5.py  
-[https://wafflegame.net/deluxe](https://wafflegame.net/deluxe) is solved by waffle7.py
+[https://wafflegame.net/deluxe](https://wafflegame.net/deluxe) is solved by waffle7.py  
 [https://wordwaffle.org/unlimited](https://wordwaffle.org/unlimited) has 3×3 Waffle puzzles, which are solved by waffle3.py
 
 Waffle puzzles are not super difficult by hand, though writing the code was a bit tricky (that is to say, fun!).

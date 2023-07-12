@@ -15,7 +15,10 @@
 # (c) 2023 Bradley Knockel
 
 
-from itertools import permutations, product
+from itertools import permutations
+# Note that product(*perms) where perms is a list of permutations could use a lot of RAM,
+#   so I don't import product from itertools
+# Instead, I do the product myself using a recursive function that loops over permutations.
 
 
 
@@ -163,7 +166,7 @@ else:
   for word in dataLong:
     if len(word)==nl:
       data.append(word)
-  dataLong.clear()  # free up RAM
+  del dataLong   # free up RAM
 
 
 # make countsAll
@@ -303,23 +306,23 @@ for wordNum in range(full):
     wordListAll.append(wordList)
 
 
-    '''
+    
     #######################
     ###### sort matches according to frequency and print
     #######################
 
-    print("\n word " + str(wordNum) + ":", greenMask, letters)
+    print("\n word " + str(wordNum) + ":   " + greenMask + "   " + letters)
     #print(letterList)
 
-    for entry in sorted(wordList, reverse=True):   # sorting is for when there is frequency data
+    for entry in sorted(wordList, reverse=True):   # sorting only does something when there is frequency data
 
-      # do not print words with low frequency
+      # do not print words with low frequency (optional)
       if entry[0] <= 1e-7:
         break
 
       print("  " + entry[1])
       #print("  " + entry[1], entry[0])
-    '''
+    
 
 
 
@@ -338,7 +341,7 @@ def loop_recursive(w, n):
         temp.append(word)
         loop_recursive(temp, n + 1)
 
-  else:
+  else:    # w is now a permutation that contains all nl+1 words
 
       # check waffle shape
       for i in range(half):   # loop over first half of the words
@@ -351,7 +354,7 @@ def loop_recursive(w, n):
         if letters.count(i) != countsAll[i]:
           return
 
-      solution = ''.join(["\n"+" ".join( [w[j][i] for j in range(half, full)] )+"\n" if i&1 else w[i//2] for i in range(nl)])  # oof
+      solution = ''.join(["\n"+" ".join( [w[j][i] for j in range(half, full)] )+"\n" if i&1 else w[i>>1] for i in range(nl)])  # oof
 
       print()
       print(solution)
@@ -368,14 +371,15 @@ if not solution:
   exit()
 
 
+
 #################################################
 ###### work out the optimal number of swaps to get to the solution
 #################################################
 
-# remove greens from solution and lettersAll and make them into lists
+# remove greens and other garbage from solution and lettersAll
 solution = list(solution)
 lettersAll = list(lettersAll.lower())
-waffleIndices = []   # used for printing on the Waffle
+waffleIndices = []   # used for printing swaps on the Waffle
 for i in range(len(greenMaskAll)):
   if greenMaskAll[i].isalpha():
     solution[i] = " "
@@ -384,9 +388,14 @@ for i in range(len(greenMaskAll)):
     waffleIndices.append(i)
 solution_string = "".join(solution).replace(' ', '').replace('\n', '')
 lettersAll_string = "".join(lettersAll).replace(' ', '').replace('\n', '')
-solution = list(solution_string)
-lettersAll = list(lettersAll_string)
 
+counts = {}
+for i in solution_string:
+  counts[i] = solution_string.count(i)
+
+solution_list = list(solution_string)
+letters_list = list(lettersAll_string)
+preSwaps = 0
 
 def printSwap(li, lj, i, j):
   li = li[0]
@@ -397,6 +406,65 @@ def printSwap(li, lj, i, j):
     print( blank[:i] + li + blank[i+1:j] + lj + blank[j+1:] )
   else:
     print( blank[:j] + lj + blank[j+1:i] + li + blank[i+1:] )
+  print()
+
+
+
+'''
+# Do swaps that make 2 new greens. This is optional but can GREATLY speed up the permutation part of the code.
+# I am not sure if this will always allow me to find the optimal solution!
+# But it should speed up the code!
+
+indices = []   # for marking indices that are already solved
+for i in range(len(solution_list)):
+  for j in range(i+1, len(solution_list)):
+    if i in indices or j in indices:   # I do not worry about preferentially trying to reduce the letters that have the most duplicates
+      continue
+    if solution_list[j] == letters_list[i] and solution_list[i] == letters_list[j]:
+      indices.append(i)
+      indices.append(j)
+      printSwap(letters_list[i], letters_list[j], i, j)
+      preSwaps += 1
+
+indices.sort(reverse=True)
+for ind in indices:
+
+  # update counts
+  letter = solution_list[ind]
+  if counts[letter] == 1:
+    counts.pop(letter)
+  else:
+    counts[letter] -= 1
+
+  # remove from lists
+  solution_list.pop(ind)
+  letters_list.pop(ind)
+  waffleIndices.pop(ind)
+'''
+
+
+
+# The following is optional but safe. It will speed up the permutation part of the code.
+# Do all swaps that swap a letter to its correct position if there is only one swappable instance of that letter
+toDelete = []   # for marking letters that are already solved
+for letter in counts:
+  if counts[letter] == 1:
+
+    i = solution_list.index(letter)
+    j = letters_list.index(letter)
+    printSwap(letters_list[i], letters_list[j], i, j)
+    preSwaps += 1
+    letters_list[j] = letters_list[i]   # swap
+
+    # remove the now green letter
+    toDelete.append(letter)
+    solution_list.pop(i)
+    letters_list.pop(i)
+    waffleIndices.pop(i)
+
+for letter in toDelete:
+  counts.pop(letter)
+
 
 
 
@@ -421,8 +489,7 @@ def minSwapsToSort(arr, n, mp, printBool):
             arr[i], arr[new] = arr[new], arr[i]
             if printBool:
               #print( [keyList[valueList.index(j)] for j in arr] )
-              printSwap(keyList[valueList.index(arr[i])], keyList[valueList.index(arr[new])] , i, new)
-              print()
+              printSwap(keyList[valueList.index(arr[i])], keyList[valueList.index(arr[new])] , new, i)
             h[init] = new
             h[temp[i]] = i
     return ans
@@ -448,55 +515,68 @@ def minSwapToMakeArraySame(a, b, n, printBool):
 # With duplicates, the problem is harder...
 #   https://stackoverflow.com/questions/18292202/finding-the-minimum-number-of-swaps-to-convert-one-string-to-another-where-the
 #
-# Let's say there are 3 r's in solution. I will instead call them r0, r1, and r2 in solution.
-# Then I will make many versions of lettersAll that have permutations of r0, r1, and r2...
-# Then, I could use the above no-duplicate code for each version of lettersAll until I find the best one(s)!
+# Let's say there are 3 r's in solution_list. I will instead call them r0, r1, and r2 in solution_list.
+# Then I will make many versions of letters_list that have permutations of r0, r1, and r2...
+# Then, I could use the above no-duplicate code for each version of letters_list until I find the best one(s)!
 # The coding of this will be more lengthy because there could be many different letters that are repeated.
 
-
-counts = {}
-for i in solution_string:
-  counts[i] = solution_string.count(i)
-
-perms = []
+permStarts = []
 for letter,count in counts.items():
-  perms.append(permutations( [ letter+str(i) for i in range(count) ] ))
 
-  # modify solution[]
+  # I can't make a list of permutations themselves because they are generators
+  #   that can only be used once.
+  # I wonder if itertools' cycle(permutations()) would be faster??
+  permStarts.append( [ letter+str(i) for i in range(count) ] )
+
+  # modify solution_list
   ind = 0
   for i in range(count):
-    for j in range(ind, len(solution)):
-      if solution[j]==letter:
+    for j in range(ind, len(solution_list)):
+      if solution_list[j]==letter:
         ind = j
         break
-    solution[ind] = letter + str(i)
+    solution_list[ind] = letter + str(i)
 
-prod = product(*perms)    # might take a lot of RAM ?
 
-bestSwaps = 1000
-best = False
-for p in prod:
+# Recursive function to handle the variable length of perms to loop through
+def loop_recursive_perms(p, n):
+  global bestSwaps, best    # these are what this function "returns"
 
-  # create letters from lettersAll, but now with specific permutations
-  letters = lettersAll[:]
-  for perm in p:
-    ind = 0
-    for i in range(len(perm)):
-      for j in range(ind, len(letters)):
-        if letters[j]==perm[0][0]:
-          ind = j
-          break
-      letters[ind] = perm[i]
+  if n < len(permStarts):
+      for perm in permutations(permStarts[n]):
+        temp = p[:]
+        temp.append(perm)
+        loop_recursive_perms(temp, n + 1)
 
-  temp = letters[:]   # minSwapToMakeArraySame() clobbers letters[]
-  swaps = minSwapToMakeArraySame( solution, letters, len(solution), False )
+  else:    # p is now a list of specific permutations
 
-  if swaps < bestSwaps:
-    bestSwaps = swaps
-    best = temp[:]
+      # create letters from letters_list, but now with specific permutations
+      letters = letters_list[:]
+      for perm in p:
+        ind = 0
+        for i in range(len(perm)):
 
-print("  At best, this will take", bestSwaps, "swaps.\n")
+          # find the index, ind
+          for j in range(ind, len(letters)):
+            if letters[j]==perm[0][0]:
+              ind = j
+              break
+
+          letters[ind] = perm[i]
+
+      temp = letters[:]   # minSwapToMakeArraySame() clobbers letters[]
+      swaps = minSwapToMakeArraySame( solution_list, letters, len(solution_list), False )
+
+      if swaps < bestSwaps:
+        bestSwaps = swaps
+        best = temp[:]
+
+
+bestSwaps = 100000    # any large enough number
+loop_recursive_perms([], 0)
+
 
 # print the swaps
-minSwapToMakeArraySame( best,  solution, len(solution), True )
+minSwapToMakeArraySame( best,  solution_list, len(solution_list), True )
 
+print("  At best, this took", bestSwaps + preSwaps, "swaps.\n")

@@ -23,16 +23,19 @@ Next steps...
 
 # waffleGen.py
 
-I was wondering how many interesting 9-letters-per-word (10-lowercase-word) waffle solutions exist.
+I was wondering how many interesting 9-letters-per-word (10-lowercase-word) waffle solutions exist. Assuming that the chance that a letter in a word is the same as a letter in another word is 1/10 (not 1/26 since not all letters are equally frequent), I get the approximate result that we should expect there to be a waffle solution if the number of words in the list is larger than 1.78^(n+1), where n is the number of letters per word and 1.78 is 10^(1/4). To get the result, compare the number of permutations of the word list, which is approximately (number of words in the list)^(n+1), with the chances that a valid waffle can be made from that permutation, which is (1/10)^((n+1)^2/4), where (n+1)^2/4 is the number of shared squares in the waffle.
 
-I made waffleGen.py to generate all possible waffle solutions. Due to the nature of exponentially growing runtime and exponentially growing solution count, the code (1) spits out seemingly endless solutions for 3-letter or 5-letter words, (2) takes seemingly forever to find a single solution for longer words, or (3) quickly proves that there are no solutions for very long words.
+A number better than 1/10 can be found by [looking at letter frequencies in the dictionary](https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html). I will assume that all word lists have the same frequencies. By summing the squares of the frequencies, I get 0.06124, so 1.78 should actually be (1/0.06124)^(1/4), which is 2.01. Since 2.01^10 is 1076, there are most likely many 9-letter-word waffles!
+
+I made waffleGen.py to generate all possible waffle solutions. Due to the nature of exponentially growing runtime, the code (1) spits out seemingly endless solutions for 3-letter or 5-letter words, (2) takes seemingly forever to find a single solution for longer words, or (3) quickly proves that there are no solutions for very long words.
 
 My current interesting results are...
-* there are no 21-letter-or-larger-word waffles. I am currently running 19-letter words.
-* since I have frequency data for 5-letter words, I can reduce the word list, which is a very successful strategy
-* for 7-letter words, after many minutes, solutions do eventually start to print
+* Because I have frequency data for 5-letter words, I can reduce the word list, which is a very successful strategy! All waffle solutions are printed in a short amount of time! Regardless of word size, this strategy is crucial because, nearly all printed puzzles are garbage because they have at least one ridiculously uncommon word.
+* There are no 21-letter-or-larger-word waffles. After roughly an hour, no puzzle solutions were found for 19-letter words or 17-letter words. The 19-letter words at least made significant progress through the search space, and, if I cared, I could have finished it.
+* For 7-letter words, after many minutes, solutions do eventually start to print. After roughly an hour, solutions started to print for 9-letter words! Neither was any real progress through the entire search space.
 
 Next steps...
-* Generate non-square rectangular waffles. 3×5 or maybe 5×7 would be the way to go while removing now-frequency 5-letter words.
+* Generate non-square rectangular waffles. 3×5 or maybe 5×7 would be the way to go while removing low-frequency 5-letter words.
+* Get frequency data for words of all lengths. Mathematica's (or WolframAlpha's??) WordFrequencyData[] could add frequencies to words_alpha.txt, but I don't have access to Mathematica.
 * Write a new code that takes a solution and makes a puzzle by swapping the letters
 

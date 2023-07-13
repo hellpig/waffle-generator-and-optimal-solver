@@ -4,13 +4,16 @@
 #   https://wafflegame.net/daily       5×5
 #   https://wafflegame.net/deluxe      7×7
 #   https://wordwaffle.org/unlimited   3×3 can be found here
-# Any odd word size greater than 1 is supported!
+# Any odd word size greater than 1 is currently supported!
 #
 # First, download freq_map.json (5-letter-word frequencies) from
 #   https://github.com/3b1b/videos/tree/master/_2022/wordle/data
 # and/or download words_alpha.txt from
 #   https://github.com/dwyl/english-words
-# words_alpha.txt works for any size words. freq_map.json is better, but only has 5-letter words.
+#
+# words_alpha.txt works for any size words.
+# freq_map.json is better, but only has 5-letter words,
+#   and my code assumes you will use it for 5-letter words
 #
 # (c) 2023 Bradley Knockel
 
@@ -261,13 +264,14 @@ for wordNum in range(full):
           if j in greenMask[:i]:
             continue
 
-          count = 0
-          for k in range(nl):
-            if letters[k]==j and letters[k]==greenMask[k]:
-              count += 1
-
           # we only care if we learn that there aren't any more of the letter in the word
           if j in wordNoGreen:
+
+            count = 0
+            for k in range(nl):
+              if letters[k]==j and letters[k]==greenMask[k]:
+                count += 1
+
             letterList.append([ j, [], count, count ])
 
 
@@ -333,7 +337,7 @@ for wordNum in range(full):
 
 # recursive function to handle the variable number of for loops (number of loops depends on nl)
 def loop_recursive(w, n):
-  global solution
+  global solution     # this is the "returned" output of the function
 
   if n < full:
       for _,word in wordListAll[n]:
@@ -376,7 +380,7 @@ if not solution:
 ###### work out the optimal number of swaps to get to the solution
 #################################################
 
-# remove greens and other garbage from solution and lettersAll
+# remove greens and other garbage from solution and lettersAll, and create waffleIndices[]
 solution = list(solution)
 lettersAll = list(lettersAll.lower())
 waffleIndices = []   # used for printing swaps on the Waffle
@@ -413,7 +417,6 @@ def printSwap(li, lj, i, j):
 '''
 # Do swaps that make 2 new greens. This is optional but can GREATLY speed up the permutation part of the code.
 # I am not sure if this will always allow me to find the optimal solution!
-# But it should speed up the code!
 
 indices = []   # for marking indices that are already solved
 for i in range(len(solution_list)):
@@ -516,9 +519,9 @@ def minSwapToMakeArraySame(a, b, n, printBool):
 #   https://stackoverflow.com/questions/18292202/finding-the-minimum-number-of-swaps-to-convert-one-string-to-another-where-the
 #
 # Let's say there are 3 r's in solution_list. I will instead call them r0, r1, and r2 in solution_list.
-# Then I will make many versions of letters_list that have permutations of r0, r1, and r2...
-# Then, I could use the above no-duplicate code for each version of letters_list until I find the best one(s)!
-# The coding of this will be more lengthy because there could be many different letters that are repeated.
+# Then I will make many versions of letters_list (called letters) that have permutations of r0, r1, and r2.
+# Then, I use the above no-duplicate code for each version of letters_list until I find an optimal one!
+# The coding of this is lengthy because there could be many different letters that are repeated.
 
 permStarts = []
 for letter,count in counts.items():
@@ -576,7 +579,7 @@ bestSwaps = 100000    # any large enough number
 loop_recursive_perms([], 0)
 
 
-# print the swaps
-minSwapToMakeArraySame( best,  solution_list, len(solution_list), True )
+# print the bestSwaps swaps
+minSwapToMakeArraySame( best, solution_list, len(solution_list), True )
 
-print("  At best, this took", bestSwaps + preSwaps, "swaps.\n")
+print("  At best, this took", preSwaps + bestSwaps, "swaps.\n")

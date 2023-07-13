@@ -17,7 +17,9 @@
 #
 # words_alpha.txt works for any size words.
 # freq_map.json is better, but only has 5-letter words,
-#   and my code assumes you will use it for 5-letter words
+#   and my code assumes you will use it for 5-letter words,
+#   and that you want to use it  frequency data to reduce
+#   the size of the word list.
 #
 # (c) 2023 Bradley Knockel
 
@@ -25,7 +27,10 @@
 
 # Set number of letters per word
 # Must be an odd number greater than 1
-nl = 17
+nl = 5
+
+# for when using freq_map.json (when nl is 5)
+freqCutoff = 0.0001
 
 
 #################################################
@@ -50,7 +55,13 @@ if nl==5:   # this list is better, but only has 5-letter words
   import json
   isFrequencyMap = True
   with open('freq_map.json') as f:
-    data = json.load(f)
+    dataLong = json.load(f)
+
+  data = []
+  for word in dataLong:
+    if dataLong[word] > freqCutoff:
+      data.append(word)
+  del dataLong   # try to free up RAM
 
 else:
 
@@ -61,7 +72,7 @@ else:
   for word in dataLong:
     if len(word)==nl:
       data.append(word)
-  del dataLong   # free up RAM
+  del dataLong   # try to free up RAM
 
 
 print("\n  Word list is", len(data), str(nl) + "-letter words.")
@@ -112,7 +123,8 @@ def loop_recursive(w, n):
 
 # Prevent symmetrically identical puzzles by doing the first two words here and enforcing w1 < w2
 for w1 in data:
-  print("  Now starting with " + w1 + " as the first word")
+  if not isFrequencyMap:
+    print("  Now starting with " + w1 + " as the first word")
   for w2 in data:
     if w2[0]==w1[0] and w1 < w2:
       loop_recursive([w1,w2], 2)

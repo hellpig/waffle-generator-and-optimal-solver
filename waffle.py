@@ -169,7 +169,7 @@ else:
   for word in dataLong:
     if len(word)==nl:
       data.append(word)
-  del dataLong   # free up RAM
+  del dataLong   # try to free up RAM
 
 
 # make countsAll

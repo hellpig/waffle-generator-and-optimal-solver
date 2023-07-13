@@ -341,9 +341,7 @@ def loop_recursive(w, n):
 
   if n < full:
       for _,word in wordListAll[n]:
-        temp = w[:]
-        temp.append(word)
-        loop_recursive(temp, n + 1)
+        loop_recursive(w + [word], n + 1)
 
   else:    # w is now a permutation that contains all nl+1 words
 
@@ -547,9 +545,7 @@ def loop_recursive_perms(p, n):
 
   if n < len(permStarts):
       for perm in permutations(permStarts[n]):
-        temp = p[:]
-        temp.append(perm)
-        loop_recursive_perms(temp, n + 1)
+        loop_recursive_perms(p + [perm], n + 1)
 
   else:    # p is now a list of specific permutations
 

@@ -18,5 +18,14 @@ The word length of the square waffle must be an odd number larger than 1. Note t
 
 Next steps...
 * Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word waffle could be made with two words (it would be a plus sign), but two words would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. A non-square rectangular waffle would be fun, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale). I would think that a 5-letter word by 7-letter word rectangle would be more interesting, and generalizing my code to handle this would be easy, but I cannot find any of these puzzles.
-* When solving the waffle, I currently do not reduce counts[] as much as I could, which could exponentially affect runtime when the code checks all combinations of possible words. Certain yellow letters in the waffle are guaranteed to not be in certain words, so counts[] could be reduced further. However, I do not believe that this is the speed bottleneck.
-* I wonder how many interesting 9-letters-per-word 10-lowercase-word waffle solutions exist. Now that I have a solver, I might try to *generate* 9×9 puzzles or puzzles of any size. Maybe I could generate non-square rectangular waffles too!
+* When solving the waffle, I currently do not reduce counts[] as much as I could, which could exponentially affect runtime when the code checks all combinations of possible words. Certain yellow letters in the waffle are guaranteed to not be in certain words, so counts[] could be reduced further. However, I do not believe that this is the speed bottleneck. If this speed does every become the bottleneck, I could also not generate every combination of possible words by checking for waffle compatibility when adding each word to the current combination list.
+
+# waffleGen.py
+
+I was wondering how many interesting 9-letters-per-word (10-lowercase-word) waffle solutions exist.
+
+I made waffleGen.py to generate all possible waffle solutions. Due to the nature of exponentially growing runtime and exponentially growing solution count, the code (1) spits out seemingly endless solutions for 3-letter or 5-letter words, (2) takes seemingly forever to find a single solution for longer words, or (3) quickly proves that there are no solutions for very long words.
+
+My current interesting result is that there are no 21-letter-or-larger-word waffles.
+
+My next step is, for 5-letter words, is the frequency data to reduce the word list.

@@ -10,7 +10,7 @@ Waffle puzzles are not super difficult by hand. Though, writing the code was a b
 
 Trying to then minimize the number of swaps was most interesting. This is trivial if there are no duplicates of initially-non-green letters, but duplicates often occur. I brute force all permutations in the case of duplicates. See comments in the code for more details.
 
-My code has a commented-out section that can greatly speed up the permutations. The idea is to swap two letters if they both become green after. I am not sure if this will affect my codes ability to find optimal swaps!
+My code has a commented-out call to swapToTwoGreens() that can greatly speed up the permutations. The idea is to swap two letters if they both become green after. I am not sure if this will affect my codes ability to find optimal swaps! I have done extensive experimental testing, and swapToTwoGreens() seems to be safe, but I would like a proof.
 
 To run the code, enter the initial puzzle into the top of the code in the format provided within the code. That is, you need to set two and only two variables. You will also need to download the word-list file(s) in the links specified at the top of the code. The solution and step-by-step optimal swaps will be output to a terminal (or, in Windows, PowerShell or whatever).
 

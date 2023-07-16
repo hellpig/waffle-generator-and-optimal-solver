@@ -116,7 +116,7 @@ HlgEtIS
 # get number of letters per word (nl)
 nl = len(greenMaskAll.split()[0])
 
-if nl < 3 and not nl&1:   # only odds greater than 1
+if nl < 3 or not nl&1:   # only odds greater than 1
   print("  Error: only 3×3, 5×5, 7×7, ... puzzles are currently supported!")
   exit()
 

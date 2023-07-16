@@ -244,11 +244,6 @@ for wordNum in range(full):
               count += 1
 
           countEven = letters[0::2].count(j)   # yellows that could be part of another word instead
-          # I assume that the game will prefer to make a non-shared spot yellow.
-          # I am assuming that if both words have a yellow of the same letter not in the shared location,
-          #   and the solution to each word only has one of that letter,
-          #   then that letter would NOT be yellow if also in the shared location???
-          # Does it matter what I assume???
 
           badLocations = [k for k in range(nl) if wordNoGreen.upper()[k] == j]
 

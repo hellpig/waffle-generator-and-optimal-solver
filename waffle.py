@@ -84,6 +84,18 @@ s...s
 """.strip().lower()
 
 
+greenMaskAll = """
+
+a.....s
+. . . .
+..tco..
+. . w .
+t.....s
+
+
+""".strip().lower()
+
+
 
 ##########   set lettersAll   ##########
 ### Capital letters mean yellow.
@@ -136,6 +148,17 @@ sauEs
 
 
 
+lettersAll = """
+
+aanTTSs
+m h o a
+UEtcobU
+O e w E
+trmTLis
+
+""".strip()
+
+
 
 #################################################
 ###### prepare
@@ -153,6 +176,7 @@ if n1 < 3 or not n1&1 or n2 < 3 or not n2&1:
 
 # useful
 half = n2//2 + 1         # the number of horizontal words
+halfVer = n1//2 + 1      # the number of vertical words
 full = (n1 + n2)//2 + 1   # the number of words
 n1p = n1+1
 
@@ -252,8 +276,10 @@ for i in 'abcdefghijklmnopqrstuvwxyz':
 ###### find the possibilities for each of the words
 #################################################
 
-# For numbering the words, horizontal are first (word on top is 0),
+# For numbering the words...
+# Initially, horizontal are first (word on top is 0),
 #   then vertical (word on right is last).
+# The numbering system will later be changed.
 
 
 wordListAll = []
@@ -406,29 +432,53 @@ for wordNum in range(full):
 ###### see which combinations work to get solution
 #################################################
 
+# New numbering system...
+#   Word on top is 0,
+#   and the vertical word on the left is 1.
+#   It keeps alternating between horizontal and vertical.
+#   If there are no vertical or horizontal words remaining,
+#   the word is still counted but is equal to ''.
+
+fullNew = max(half,halfVer) * 2
+
+wordListAllNew = [[] for i in range(fullNew)]
+for i in range(half):
+  wordListAllNew[i*2] = wordListAll[i]
+for i in range(halfVer):
+  wordListAllNew[i*2 + 1] = wordListAll[half + i]
+
+limits = [2*half, 2*halfVer]
+
+
 
 # recursive function to handle the variable number of for loops (number of loops depends on n1 and n2)
 def loop_recursive(w, n):
   global solution     # this is the "returned" output of the function
 
-  if n < full:
-      for _,word in wordListAll[n]:
+  if n < fullNew:
+
+    if wordListAllNew[n]:
+      for _,word in wordListAllNew[n]:
+
+        temp = (n//2)*2   # 0, 0, 2, 2, 4, 4, ...
+        temp2 = (n+1)&1   # 1, 0, 1, 0, 1, 0, ...
+        if word[0:n:2] != "".join( [w[j][temp] for j in range(temp2, min(n, limits[temp2]), 2)] ) :
+          continue
+
         loop_recursive(w + [word], n + 1)
 
-  else:    # w is now a permutation that contains all (n1 + n2)/2 + 1 words
+    else:
+      loop_recursive(w + [''], n + 1)
 
-      # check waffle shape
-      for i in range(half):   # loop over the horizontal words
-        if w[i][0::2] != "".join( [w[j][i*2] for j in range(half, full)] ) :
-          return
+  else:    # w is now a permutation that contains all (n1 + n2)/2 + 1 words and some ''
 
       # check counts
-      letters = ''.join( [w[i] if i<half else w[i][1::2] for i in range(full)] )
+      letters = ''.join( [w[i][1::2] if i&1 else w[i] for i in range(fullNew)] )
       for i in set(letters):    # is this faster than:  i in letters
         if letters.count(i) != countsAll[i]:
           return
 
-      solution = ''.join(["\n"+" ".join( [w[j][i] for j in range(half, full)] )+"\n" if i&1 else w[i>>1] for i in range(n2)])  # oof
+      solution = ''.join(["\n"+" ".join( [w[j][i] for j in range(1,n1p,2)] )+"\n" if i&1 else w[i] for i in range(n2)])  # oof
 
       print()
       print(solution)

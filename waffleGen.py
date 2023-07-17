@@ -137,7 +137,7 @@ print("  Word list 2 is", len(data2), str(n2) + "-letter words.")
 # For numbering the words, word on top is 0,
 #   and the vertical word on the left is 1.
 #   It keeps alternating between horizontal and vertical.
-#   If there are not vertical left,
+#   If there are no vertical words remaining,
 #     the word is still counted but is equal to ''.
 
 

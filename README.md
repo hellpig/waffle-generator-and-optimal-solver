@@ -1,7 +1,7 @@
 # waffle-optimal-solver
-Waffle puzzles are basically 2D Wordle puzzles for which you must swap letters. I find optimal (fewest swap) solutions to waffles of various sizes!
+Waffle puzzles are basically 2D Wordle puzzles for which you must swap letters. I find optimal (fewest swap) solutions to waffles of various rectangular sizes!
 
-The puzzles...  
+All the rectangular ones that I can find online are square. The puzzles...  
 [https://wafflegame.net/daily](https://wafflegame.net/daily) is 5×5  
 [https://wafflegame.net/deluxe](https://wafflegame.net/deluxe) is 7×7  
 [https://wordwaffle.org/unlimited](https://wordwaffle.org/unlimited) has 3×3 Waffle puzzles
@@ -10,17 +10,15 @@ Waffle puzzles are not super difficult by hand. Though, writing the code was a b
 
 Trying to then minimize the number of swaps was most interesting. This is trivial if there are no duplicates of initially-non-green letters, but duplicates often occur. I brute force all permutations in the case of duplicates. See comments in the code for more details.
 
-My code has a commented-out call to swapToTwoGreens() that can greatly speed up the permutations. The idea is to swap two letters if they both become green after. I am not sure if this will affect my codes ability to find optimal swaps! I have done extensive experimental testing, and swapToTwoGreens() seems to be safe, but I would like a proof.
+My code has a commented-out call to swapToTwoGreens() that can greatly speed up the permutations. Starting from the upper left then going right, it swaps the first pairs that work. The idea is to swap two letters if they both become green after. I am not sure if this will affect my codes ability to find optimal swaps! I have done extensive experimental testing, and swapToTwoGreens() seems to be safe, but I would like a proof.
 
 To run the code, enter the initial puzzle into the top of the code in the format provided within the code. That is, you need to set two and only two variables. You will also need to download the word-list file(s) in the links specified at the top of the code. The solution and step-by-step optimal swaps will be output to a terminal (or, in Windows, PowerShell or whatever).
 
-The word length of the square waffle must be an odd number larger than 1. Note that 5×5 waffles use a better word list, but the list only has 5-letter words. The word list used for other sizes has lowercase English words of all lengths.
-
-I was curious how [https://wafflegame.net/daily](https://wafflegame.net/daily) handles certain situations, so I did some limited testing. The game seems to prefer to make a shared letter yellow (wordwaffle.org's 5×5 puzzles seemed to do this too, but then another time seemed to *not* do this). If a shared letter is yellow and appears once in both words, a duplicate of that letter won't be yellow if in one of the words, but will be yellow if it in the other word (this is a bug because the game should either consistently try to color the fewest possible letters yellow or consistently try to color the most possible letters yellow). A solver clearly cannot depend on such things! I bet both games just color in the first yellow that can be done while in the normal left-to-right top-to-bottom order.
+The word lengths must be an odd number larger than 1. Note that 5-letter words use a better word list, but the list only has 5-letter words. The word list used for other sizes has lowercase English words of all lengths.
 
 Next steps...
-* Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. A non-square rectangular waffle would be fun, though I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale). I would think that a 5-letter-word by 7-letter-word rectangle would be more interesting, and generalizing my code to handle this would be easy.
-* When solving the waffle, I currently do not reduce counts[] as much as I could, which could exponentially affect runtime when the code checks all combinations of possible words. Certain yellow letters in the waffle are guaranteed to not be in certain words, so counts[] could be reduced further. However, by watching the timing of the code's output appear, I do not believe that this is the speed bottleneck. If this speed does ever become the bottleneck, I could also speed it up by not generating every combination of possible words by checking for waffle compatibility when adding each word to the current combination list (waffleGen.py uses this faster strategy).
+* Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle would be more interesting!
+* When solving the waffle, I currently do not reduce counts[] as much as I could, which could exponentially affect runtime when the code checks all combinations of possible words. Certain yellow letters in the waffle are guaranteed to not be in certain words, so counts[] could be reduced further. I could also speed it up by not generating every combination of possible words by checking for waffle compatibility when adding each word to the current combination list (waffleGen.py uses this faster strategy).
 
 
 # waffleGen.py
@@ -48,5 +46,27 @@ My current interesting results are...
 Next steps...
 * Get frequency data for words of all lengths. Mathematica's (or WolframAlpha's??) WordFrequencyData[] could add frequencies to words_alpha.txt, but I don't have access to Mathematica.
 * Maybe I could make the code faster by placing words in the hardest locations first. For example, if it is time to place a horizontal word, and the leftmost vertical word has the letter *z* in it, place the horizontal word where the *z* is (if possible). I am not convinced that this would even be faster.
-* Write another code that takes a solution and makes a puzzle by swapping the letters. I already have a solver that finds the optimal swaps, so there is a chance that this isn't very difficult. I would just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The puzzle should ideally also not have obvious moves where a yellow letter has only one grey letter that it could swap with.
+* Write another code that takes a solution and makes a puzzle by swapping the letters. I already have a solver that finds the optimal swaps, so there is a chance that this isn't very difficult. I would just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The puzzle should ideally also not have obvious moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). I would first need to figure out how to color the yellow letters after coloring all green letters.
+
+
+# how to color the yellow letters after coloring all green letters
+
+I believe that there should never be more yellows than letters. For example, if the left two vertical words' solutions do not have an *A* and the horizontal word's solution has one *A*, then *A-A--* cannot be the yellow hint for *-A---*. The way to do this is to associate each yellow with a letter in the solution.
+
+The way I see it, the game could have one of two modes: easy or hard. Though these names are misleading because the differences between the modes do not often appear.
+
+In easy mode, the game should first look at all non-green non-shared locations to try to color in every non-shared location it can (perhaps using an upper-left preference). To do this, it should prefer to associate these yellows with solution letters in non-shared locations. If it needs to be associated with a solution letter in a shared location, a porbably-complex analysis would reveal the best way of doing this to have the most yellows on the board. Then, fill in yellows for shared letters if they are needed in a way that maximizes yellows on the board.
+
+In hard mode, the game should first look at all non-green shared locations to try to color in every shared location it can. The game should do this in a way that minimizes that number of yellows. Once all shared locations are handled, fill in yellows in non-shared locations, but always count a shared yellow towards both words.
+
+Since this is a tricky analysis to be doing live as the player moves things around, I was curious how [https://wafflegame.net/daily](https://wafflegame.net/daily) handles certain situations, so I did some very limited testing.
+
+If the solution for a word has a single instance of a letter, but two of the squares—one shared and one not—have that letter (and the other word's solution does not contain that letter), the game seemed to prefer to make a shared letter yellow. However, wordwaffle.org's 5×5 puzzles seemed to do this too, but then another time seemed to *not* do this. The game should either consistently choose to make the shared letter yellow (hard mode) or the non-shared letter yellow (easy mode).
+
+If a shared letter is yellow and appears once in both words' solution, a duplicate of that letter wasn't yellow if in one of the words, but was yellow if in the other word. This might be thought to be a but because the game should either consistently try to color the fewest possible non-shared letters yellow (hard mode) or consistently try to color the most possible non-shared letters yellow (easy mode).
+
+A solver clearly cannot depend on such things! Though, I don't know if a solver could use this information.
+
+**Now that I think about it, I bet both online games just color in the first yellow that can be made yellow and associating it with the first letter it can while using the normal left-to-right top-to-bottom order. For simplicity and runtime, I might even recommend such a strategy, though I still might recommend trying to start with either shared or non-shared locations.**
+
 

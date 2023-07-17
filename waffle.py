@@ -1,10 +1,13 @@
 #!/usr/bin/env python3.11
 #
-# Find optimal (fewest swap) solutions for square Waffle puzzles...
+# Find optimal (fewest swap) solutions for rectangular Waffle puzzles.
+# Any odd word size greater than 1 is currently supported!
+#
+# Some examples of square puzzles online...
 #   https://wafflegame.net/daily       5×5
 #   https://wafflegame.net/deluxe      7×7
 #   https://wordwaffle.org/unlimited   3×3 can be found here
-# Any odd word size greater than 1 is currently supported!
+# I cannot find any non-square rectangular puzzles online.
 #
 # First, download freq_map.json (5-letter-word frequencies) from
 #   https://github.com/3b1b/videos/tree/master/_2022/wordle/data
@@ -68,6 +71,19 @@ e.i.e.t
 """.strip().lower()
 
 
+greenMaskAll = """
+
+a...t
+. . .
+..t..
+. c .
+..ow.
+. . .
+s...s
+
+""".strip().lower()
+
+
 
 ##########   set lettersAll   ##########
 ### Capital letters mean yellow.
@@ -106,6 +122,19 @@ HlgEtIS
 """.strip()
 
 
+lettersAll = """
+
+amUOt
+a E r
+nhtem
+T c T
+ToowL
+S b i
+sauEs
+
+""".strip()
+
+
 
 
 #################################################
@@ -113,25 +142,27 @@ HlgEtIS
 #################################################
 
 
-# get number of letters per word (nl)
-nl = len(greenMaskAll.split()[0])
+# get number of letters per word (n1 and n2)
+n1 = len(greenMaskAll.split()[0])    # length of horizontal words
+n2 = len(greenMaskAll.split('\n'))   # length of vertical words
 
-if nl < 3 or not nl&1:   # only odds greater than 1
-  print("  Error: only 3×3, 5×5, 7×7, ... puzzles are currently supported!")
+if n1 < 3 or not n1&1 or n2 < 3 or not n2&1:
+  print("  Error: only odd sizes greater than 1!")
   exit()
 
 
-# useful (assuming odd nl)
-half = nl//2 + 1
-full = nl + 1   # the number of words
+# useful
+half = n2//2 + 1         # the number of horizontal words
+full = (n1 + n2)//2 + 1   # the number of words
+n1p = n1+1
 
-# make blank board (eventually also used for printing swaps) (assume odd nl)
-temp = "." * nl + "\n" + ". " * (nl//2) + ".\n"
-blank = temp * (nl//2) + "." * nl
+# make blank board (eventually also used for printing swaps)
+temp = "." * n1 + "\n" + ". " * (n1//2) + ".\n"
+blank = temp * (n2//2) + "." * n1
 
 
 # check for consistency
-if len(greenMaskAll) != nl*(nl+1)-1:
+if len(greenMaskAll) != n2*(n1+1)-1:
   print("  Error: greenMaskAll has an invalid shape!")
   exit()
 if len(greenMaskAll) != len(lettersAll):
@@ -151,25 +182,62 @@ for i in range(len(greenMaskAll)):   # check against structure of blank
     exit()
 
 
-# load word list
-isFrequencyMap = False
-if nl==5:   # this list is better, but only has 5-letter words
+
+dataLong = False
+
+
+
+# load first word list
+isFrequencyMap1 = False
+if n1==5:   # this list is better, but only has 5-letter words
 
   import json
-  isFrequencyMap = True
+  isFrequencyMap1 = True
   with open('freq_map.json') as f:
-    data = json.load(f)
+    data1 = json.load(f)
 
 else:
 
   with open('words_alpha.txt') as f:
     dataLong = f.read().split()
 
-  data = []
+  data1 = []
   for word in dataLong:
-    if len(word)==nl:
-      data.append(word)
+    if len(word)==n1:
+      data1.append(word)
+
+
+
+# load 2nd word list
+
+if n1==n2:
+  data2 = data1
+  isFrequencyMap2 = isFrequencyMap1
+else:
+  isFrequencyMap2 = False
+  if n2==5:   # this list is better, but only has 5-letter words
+
+    import json
+    isFrequencyMap2 = True
+    with open('freq_map.json') as f:
+      data2 = json.load(f)
+
+  else:
+
+    if not dataLong:
+      with open('words_alpha.txt') as f:
+        dataLong = f.read().split()
+
+    data2 = []
+    for word in dataLong:
+      if len(word)==n2:
+        data2.append(word)
+
+
+if dataLong:
   del dataLong   # try to free up RAM
+
+
 
 
 # make countsAll
@@ -193,15 +261,21 @@ wordListAll = []
 for wordNum in range(full):
 
 
-    # take the correct slice
+    # take the correct slice and get correct word list (data), number of letters (nl), and isFrequencyMap
     if wordNum < half:   # horizontal words
-      start = 2 * wordNum * full
-      greenMask = greenMaskAll[ start : start+nl ]
-      letters = lettersAll[ start : start+nl ]
+      start = 2 * wordNum * n1p
+      greenMask = greenMaskAll[ start : start+n1 ]
+      letters = lettersAll[ start : start+n1 ]
+      data = data1
+      nl = n1
+      isFrequencyMap = isFrequencyMap1
     else:
       start = 2 * (wordNum - half)
-      greenMask = greenMaskAll[ start :: full ]
-      letters = lettersAll[ start :: full ]
+      greenMask = greenMaskAll[ start :: n1p ]
+      letters = lettersAll[ start :: n1p ]
+      data = data2
+      nl = n2
+      isFrequencyMap = isFrequencyMap2
 
 
     # make counts
@@ -243,6 +317,7 @@ for wordNum in range(full):
             if letters[k]==j.lower() and letters[k]==greenMask[k]:
               count += 1
 
+          # assume that the other word has not had all of its other letters solved
           countEven = letters[0::2].count(j)   # yellows that could be part of another word instead
 
           badLocations = [k for k in range(nl) if wordNoGreen.upper()[k] == j]
@@ -273,7 +348,7 @@ for wordNum in range(full):
 
 
     #######################
-    ###### search through all words in dictionary
+    ###### search through all words in word list
     #######################
 
     wordList = []
@@ -297,7 +372,13 @@ for wordNum in range(full):
 
       if go:
         if isFrequencyMap:
+
+          # do not print words with low frequency (optional)
+          #if data[word] <= 1e-7:
+          #  continue
+
           wordList.append((data[word], word))
+
         else:
           # frequency is unknown, so I put 1. Mathematica's (or WolframAlpha's ??) WordFrequencyData[] could add frequencies to words_alpha.txt
           wordList.append((1, word))
@@ -313,11 +394,7 @@ for wordNum in range(full):
     print("\n word " + str(wordNum) + ":   " + greenMask + "   " + letters)
     #print(letterList)
 
-    for entry in sorted(wordList, reverse=True):   # sorting only does something when there is frequency data
-
-      # do not print words with low frequency (optional)
-      if entry[0] <= 1e-7:
-        break
+    for entry in wordList:   #sorted(wordList, reverse=True):   # sorting only does something when there is frequency data for both word lists
 
       print("  " + entry[1])
       #print("  " + entry[1], entry[0])
@@ -330,7 +407,7 @@ for wordNum in range(full):
 #################################################
 
 
-# recursive function to handle the variable number of for loops (number of loops depends on nl)
+# recursive function to handle the variable number of for loops (number of loops depends on n1 and n2)
 def loop_recursive(w, n):
   global solution     # this is the "returned" output of the function
 
@@ -338,10 +415,10 @@ def loop_recursive(w, n):
       for _,word in wordListAll[n]:
         loop_recursive(w + [word], n + 1)
 
-  else:    # w is now a permutation that contains all nl+1 words
+  else:    # w is now a permutation that contains all (n1 + n2)/2 + 1 words
 
       # check waffle shape
-      for i in range(half):   # loop over first half of the words
+      for i in range(half):   # loop over the horizontal words
         if w[i][0::2] != "".join( [w[j][i*2] for j in range(half, full)] ) :
           return
 
@@ -351,7 +428,7 @@ def loop_recursive(w, n):
         if letters.count(i) != countsAll[i]:
           return
 
-      solution = ''.join(["\n"+" ".join( [w[j][i] for j in range(half, full)] )+"\n" if i&1 else w[i>>1] for i in range(nl)])  # oof
+      solution = ''.join(["\n"+" ".join( [w[j][i] for j in range(half, full)] )+"\n" if i&1 else w[i>>1] for i in range(n2)])  # oof
 
       print()
       print(solution)
@@ -458,9 +535,11 @@ def swapSafe():
 
       i = solution_list.index(letter)
       j = letters_list.index(letter)
-      printSwap(letters_list[i], letters_list[j], i, j)
-      swaps += 1
-      letters_list[j] = letters_list[i]   # swap
+
+      if i!=j:
+        printSwap(letters_list[i], letters_list[j], i, j)
+        swaps += 1
+        letters_list[j] = letters_list[i]   # swap
 
       # remove the now green letter
       toDelete.append(letter)
@@ -597,8 +676,9 @@ def permuteToGetMinSwaps():
 ######## do everything!
 
 swaps = 0
-swaps += swapToTwoGreens()
+#swaps += swapToTwoGreens()
 swaps += swapSafe()
+
 permuteToGetMinSwaps()
 swaps += bestSwaps
 

@@ -10,21 +10,21 @@ Waffle puzzles are not super difficult by hand. Though, writing the code was a b
 
 Trying to then minimize the number of swaps was most interesting. This is trivial if there are no duplicates of initially-non-green letters, but duplicates often occur. I brute force all permutations in the case of duplicates. See comments in the code for more details.
 
-My code has a commented-out call to swapToTwoGreens() that can greatly speed up the permutations. Starting from the upper left then going right, it swaps the first pairs that work. The idea is to swap two letters if they both become green after. I am not sure if this will affect my codes ability to find optimal swaps! I have done extensive experimental testing, and swapToTwoGreens() seems to be safe, but I would like a proof.
+My code has a commented-out call to swapToTwoGreens() that can greatly speed up the permutations. The idea is to swap two letters if they both become green after. Starting from the upper left then going right, it swaps the first pairs that work. I am not sure if this will affect my code's ability to find optimal swaps! I have done extensive experimental testing, and swapToTwoGreens() seems to be safe, but I would like a proof.
 
-To run the code, enter the initial puzzle into the top of the code in the format provided within the code. That is, you need to set two and only two variables. You will also need to download the word-list file(s) in the links specified at the top of the code. The solution and step-by-step optimal swaps will be output to a terminal (or, in Windows, PowerShell or whatever).
+To run the code, enter the initial puzzle into the top section of the code in the format provided within the code. That is, you need to set two and only two variables. You will also need to download the word-list file(s) in the links specified at the top of the code. The solution and step-by-step optimal swaps will be output to a terminal (or, in Windows, PowerShell or whatever).
 
 The word lengths must be an odd number larger than 1. Note that 5-letter words use a better word list, but the list only has 5-letter words. The word list used for other sizes has lowercase English words of all lengths.
 
 Next steps...
-* Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word square waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word square waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle would be more interesting!
+* Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word square waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word square waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle, which my code can already solve, would be more interesting!
 
 
 # waffleGen.py
 
 I made waffleGen.py to generate all possible waffle solutions of a certain rectangular size.
 
-**Reducing the size of the word list exponentially helps runtime and is always crucial**. Without reducing the word list, nearly all printed puzzles are garbage because they have at least one ridiculously uncommon word. I suppose the user could always hand select the desired sublist then run the generator code!
+**Reducing the size of the word list *greatly* helps runtime and is always crucial**. Without reducing the word list, nearly all printed puzzles are garbage because they have at least one ridiculously uncommon word. I suppose the user could always hand select the desired sublist then run the generator code!
 
 If the length of a word list is not changed, the length of the word does not greatly affect runtime. This is because few scenarios make it past 3 or 4 words. Regardless of word size, word lists should be less than 1000 if you want to finish them in a reasonable amount of time. If you want to use multiple CPU cores, quickly modify my code so that each core could be assigned different starting words, keeping in mind that starting words with a starting letter that is a common starting letter in the word list will likely take longer to run.
 
@@ -45,10 +45,11 @@ My current interesting results for *square* waffles are...
 Next steps...
 * Get frequency data for words of all lengths. Mathematica's (or WolframAlpha's??) WordFrequencyData[] could add frequencies to words_alpha.txt, but I don't have access to Mathematica.
 * Maybe I could make the code faster by placing words in the hardest locations first. For example, if it is time to place a horizontal word, and the leftmost vertical word has the letter *z* in it, place the horizontal word where the *z* is (if possible). I am not convinced that this would even be faster.
-* Write another code that takes a solution and makes a puzzle by swapping the letters. I already have a solver that finds the optimal swaps, so there is a chance that this isn't very difficult. I would just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The puzzle should ideally also not have obvious moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). I would first need to figure out how to color the yellow letters after coloring all green letters.
 
 
 # how to color the yellow letters after coloring all green letters
+
+I could write another code that takes a solution and makes a puzzle by swapping the letters. I already have a solver that finds the optimal swaps, so there is a chance that this isn't very difficult. I would just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The final puzzle should ideally also not have obvious moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). I would first need to figure out how to color the yellow letters after coloring all green letters.
 
 I believe that there should never be more yellows than letters. For example, if the left two vertical words' solutions do not have an *A* and the horizontal word's solution has one *A*, then *A-A--* cannot be the yellow hint for *-A---*. The way to do this is to associate each yellow with a letter in the solution.
 

@@ -1,5 +1,5 @@
 # waffle-optimal-solver
-Waffle puzzles are basically 2D Wordle puzzles for which you must swap letters. I find optimal (fewest swap) solutions to waffles of various rectangular sizes!
+Waffle puzzles are basically 2D Wordle puzzles for which you must swap letters. I find optimal (fewest swap) solutions to waffles of various rectangular sizes! I can also generate waffles!
 
 All the rectangular ones that I can find online are square. The puzzles...  
 [https://wafflegame.net/daily](https://wafflegame.net/daily) is 5×5  
@@ -49,7 +49,7 @@ Next steps...
 
 # waffleGen2.py
 
-I wrote another code that takes a solution and makes a puzzle by swapping the letters. It uses the same solver and swap counting algorithm as waffle.py. Currently, it is a toolbox for you to edit the final "main code" section. The only strategy I put in the code is just shuffling all the letters, which can produce puzzles that take forever for the code to solve due to not having many greens, so you should write your own strategies that have more greens, perhaps to shoot for a certain number of optimal swaps. You could just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The final puzzle should ideally also not have obvious moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). My code currently makes sure that there is one solution and that there are no trivial swaps. I first needed to figure out how to color the yellow letters after coloring all green letters.
+I wrote waffleGen2.py to take a solution and makes a puzzle by swapping the letters. It uses the same solver and swap counting algorithm as waffle.py. Currently, it is a toolbox for you to edit the final "main code" section. The only strategy I put in the code is just shuffling all the letters, which can produce puzzles that take forever for the code to solve due to not having many greens, so you should write your own strategies that have more greens, perhaps to shoot for a certain number of optimal swaps. You could just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The final puzzle should ideally also not have obvious moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). My code currently makes sure that there is one solution and that there are no trivial swaps. I first needed to figure out how to color the yellow letters after coloring all green letters.
 
 I believe that the way to color yellow letters is, first, look at all non-green shared locations to try to color in every shared location we can. Once all shared locations are handled, fill in yellows in non-shared locations, but always count a shared yellow towards both words.
 

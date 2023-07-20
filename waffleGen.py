@@ -1,12 +1,13 @@
 #!/usr/bin/env python3.11
 #
-# Generate rectangular Waffle grids of any size...
+# Generate rectangular Waffle solutions of any size...
 # Any odd word size greater than 1 is currently supported!
 #
 # Some examples of puzzles online...
 #   https://wafflegame.net/daily       5×5
 #   https://wafflegame.net/deluxe      7×7
 #   https://wordwaffle.org/unlimited   3×3 can be found here
+# I cannot find any non-square rectangular puzzles online.
 #
 # For square waffles...
 #  - I prevent symmetrically identical puzzles.

@@ -60,6 +60,18 @@ t...e
 
 greenMaskAll = """
 
+.....
+. . .
+.....
+. . .
+.....
+
+
+""".strip().lower()
+
+
+greenMaskAll = """
+
 ..t.n..
 . . . .
 e.p.a.n
@@ -97,6 +109,8 @@ t.....s
 
 
 
+
+
 ##########   set lettersAll   ##########
 ### Capital letters mean yellow.
 
@@ -117,6 +131,17 @@ h s r
 zetIN
 o R r
 tfERe
+
+""".strip()
+
+
+lettersAll = """
+
+HeTeh
+i w E
+NfznR
+o t r
+IrfsR
 
 """.strip()
 
@@ -147,7 +172,6 @@ sauEs
 """.strip()
 
 
-
 lettersAll = """
 
 aanTTSs
@@ -157,6 +181,9 @@ O e w E
 trmTLis
 
 """.strip()
+
+
+
 
 
 
@@ -186,7 +213,7 @@ blank = temp * (n2//2) + "." * n1
 
 
 # check for consistency
-if len(greenMaskAll) != n2*(n1+1)-1:
+if len(greenMaskAll) != n2*n1p-1:
   print("  Error: greenMaskAll has an invalid shape!")
   exit()
 if len(greenMaskAll) != len(lettersAll):
@@ -207,7 +234,7 @@ for i in range(len(greenMaskAll)):   # check against structure of blank
 
 
 
-dataLong = False
+dataLong = False   # do not change
 
 
 
@@ -258,8 +285,8 @@ else:
         data2.append(word)
 
 
-if dataLong:
-  del dataLong   # try to free up RAM
+
+del dataLong   # try to free up RAM
 
 
 
@@ -412,9 +439,9 @@ for wordNum in range(full):
     wordListAll.append(wordList)
 
 
-    
+
     #######################
-    ###### sort matches according to frequency and print
+    ###### print
     #######################
 
     print("\n word " + str(wordNum) + ":   " + greenMask + "   " + letters)

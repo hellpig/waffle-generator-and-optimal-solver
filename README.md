@@ -22,9 +22,9 @@ Next steps...
 
 # waffleGen.py
 
-I made waffleGen.py to generate all possible waffle solutions of a certain rectangular size.
+I made waffleGen.py to generate all possible waffle solutions of any rectangular size.
 
-**Reducing the size of the word list *greatly* helps runtime and is always crucial**. Without reducing the word list, nearly all printed puzzles are garbage because they have at least one ridiculously uncommon word. I suppose the user could always hand select the desired sublist then run the generator code!
+**Reducing the size of a word list *greatly* helps runtime and is always crucial**. Without reducing the word list, nearly all printed puzzles are garbage because they have at least one ridiculously uncommon word. I suppose the user could always hand select the desired sublist then run the generator code!
 
 If the length of a word list is not changed, the length of the word does not greatly affect runtime. This is because few scenarios make it past 3 or 4 words. Regardless of word size, word lists should be less than 1000 if you want to finish them in a reasonable amount of time. If you want to use multiple CPU cores, quickly modify my code so that each core could be assigned different starting words, keeping in mind that starting words with a starting letter that is a common starting letter in the word list will likely take longer to run.
 
@@ -47,26 +47,15 @@ Next steps...
 * Maybe I could make the code faster by placing words in the hardest locations first. For example, if it is time to place a horizontal word, and the leftmost vertical word has the letter *z* in it, place the horizontal word where the *z* is (if possible). I am not convinced that this would even be faster.
 
 
-# how to color the yellow letters after coloring all green letters
+# waffleGen2.py
 
-I could write another code that takes a solution and makes a puzzle by swapping the letters. I already have a solver that finds the optimal swaps, so there is a chance that this isn't very difficult. I would just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The final puzzle should ideally also not have obvious moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). I would first need to figure out how to color the yellow letters after coloring all green letters.
+I wrote another code that takes a solution and makes a puzzle by swapping the letters. It uses the same solver and swap counting algorithm as waffle.py. Currently, it is a toolbox for you to edit the final "main code" section. The only strategy I put in the code is just shuffling all the letters, which can produce puzzles that take forever for the code to solve due to not having many greens, so you should write your own strategies that have more greens, perhaps to shoot for a certain number of optimal swaps. You could just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The final puzzle should ideally also not have obvious moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). My code currently makes sure that there is one solution and that there are no trivial swaps. I first needed to figure out how to color the yellow letters after coloring all green letters.
 
-I believe that there should never be more yellows than letters. For example, if the left two vertical words' solutions do not have an *A* and the horizontal word's solution has one *A*, then *A-A--* cannot be the yellow hint for *-A---*. The way to do this is to associate each yellow with a letter in the solution.
+I believe that the way to color yellow letters is, first, look at all non-green shared locations to try to color in every shared location we can. Once all shared locations are handled, fill in yellows in non-shared locations, but always count a shared yellow towards both words.
 
-The way I see it, the game could have one of two modes: easy or hard. Though these names are misleading because the differences between the modes do not often appear.
-
-In easy mode, the game should first look at all non-green non-shared locations to try to color in every non-shared location it can (perhaps using an upper-left preference). To do this, it should prefer to associate these yellows with solution letters in non-shared locations. If it needs to be associated with a solution letter in a shared location, a porbably-complex analysis would reveal the best way of doing this to have the most yellows on the board. Then, fill in yellows for shared letters if they are needed in a way that maximizes yellows on the board.
-
-In hard mode, the game should first look at all non-green shared locations to try to color in every shared location it can. The game should do this in a way that minimizes that number of yellows. Once all shared locations are handled, fill in yellows in non-shared locations, but always count a shared yellow towards both words.
-
-Since this is a tricky analysis to be doing live as the player moves things around, I was curious how [https://wafflegame.net/daily](https://wafflegame.net/daily) handles certain situations, so I did some very limited testing.
-
-If the solution for a word has a single instance of a letter, but two of the squares—one shared and one not—have that letter (and the other word's solution does not contain that letter), the game seemed to prefer to make a shared letter yellow. However, wordwaffle.org's 5×5 puzzles seemed to do this too, but then another time seemed to *not* do this. The game should either consistently choose to make the shared letter yellow (hard mode) or the non-shared letter yellow (easy mode).
-
-If a shared letter is yellow and appears once in both words' solution, a duplicate of that letter wasn't yellow if in one of the words, but was yellow if in the other word. This might be thought to be a but because the game should either consistently try to color the fewest possible non-shared letters yellow (hard mode) or consistently try to color the most possible non-shared letters yellow (easy mode).
-
-A solver clearly cannot depend on such things! Though, I don't know if a solver could use this information.
-
-**Now that I think about it, I bet both online games just color in the first yellow that can be made yellow and associating it with the first letter it can while using the normal left-to-right top-to-bottom order. For simplicity and runtime, I might even recommend such a strategy, though I still might recommend trying to start with either shared or non-shared locations.**
+I was curious how [https://wafflegame.net/daily](https://wafflegame.net/daily) and [https://wordwaffle.org/unlimited](https://wordwaffle.org/unlimited) handle certain situations, so I did some limited testing.
+* If the solution for a word has a single instance of a letter, but two of the squares—one shared and one not—have that letter (and the other word's solution does not contain that letter), the game did not prefer to make a shared letter yellow, and it also did not prefer to make a non-shared letter yellow. The game should either consistently choose to make the shared letter yellow or the non-shared letter yellow.
+* If a shared letter is yellow and appears once in both words' solution, a duplicate of that letter wasn't yellow if in one of the words, but was yellow if in the other word. This might be thought to be a bug because the game should either consistently try to color the fewest possible non-shared letters yellow or consistently try to color the most possible non-shared letters yellow.
+* Both online games seem to just color in the first yellow that can be made yellow and associating it with the first letter it can while using the normal left-to-right top-to-bottom order. For simplicity and runtime, I recommend such a strategy eventually, though I still recommend trying to start with shared locations.
 
 

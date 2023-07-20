@@ -286,12 +286,42 @@ def colorPuzzle(puzzle):
 
 
   # put yellows in lettersAll by making yellow letters upper case
-  # I currently start with shared locations (hard mode), but feel free to do non-shared locations first!
   lettersAll = puzzle[:]
   trivialPuzzle = False
 
-  candidates = [(a,b,c,d) for a,b,c,d in yellowCandidates if len(c)==2]   # shared locations
-  for a,b,c,d in candidates:
+  candidates =  [(a,b,c,d) for a,b,c,d in yellowCandidates if len(c)==2]   # shared locations
+  candidates2 = [(a,b,c,d) for a,b,c,d in yellowCandidates if len(c)==1]   # non-shared locations
+
+  indices = []   # marking indices to go back to
+  for i,(a,b,c,d) in enumerate(candidates):    # first, do only locations that are inW1 and inW2
+    w1 = c[0]  # wordNum1
+    w2 = c[1]  # wordNum2
+    inW1 = a in wordsLists[w1]
+    inW2 = a in wordsLists[w2]
+    if inW1 and inW2:
+
+      lettersAll[b] = lettersAll[b].upper()
+      if d:
+        trivialPuzzle = True
+
+      wordsLists[w1].remove(a)
+      wordsLists[w2].remove(a)
+
+    else:
+      indices.append(i)
+
+  for a,b,c,d in candidates2:
+    w1 = c[0]  # wordNum
+    if a in wordsLists[w1]:
+
+      lettersAll[b] = lettersAll[b].upper()
+      if d:
+        trivialPuzzle = True
+
+      wordsLists[w1].remove(a)
+
+  for i in indices:    # do the skipped locations
+    a,b,c,d = candidates[i]
     w1 = c[0]  # wordNum1
     w2 = c[1]  # wordNum2
     inW1 = a in wordsLists[w1]
@@ -306,17 +336,6 @@ def colorPuzzle(puzzle):
         wordsLists[w1].remove(a)
       if inW2:
         wordsLists[w2].remove(a)
-
-  candidates = [(a,b,c,d) for a,b,c,d in yellowCandidates if len(c)==1]   # non-shared locations
-  for a,b,c,d in candidates:
-    w1 = c[0]  # wordNum
-    if a in wordsLists[w1]:
-
-      lettersAll[b] = lettersAll[b].upper()
-      if d:
-        trivialPuzzle = True
-
-      wordsLists[w1].remove(a)
 
 
 

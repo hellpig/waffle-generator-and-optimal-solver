@@ -49,6 +49,7 @@ My current interesting results for *square* waffles are...
 Next steps...
 * Get frequency data for words of all lengths. Mathematica's (or WolframAlpha's??) WordFrequencyData[] could add frequencies to words_alpha.txt, but I don't have access to Mathematica.
 * Maybe I could make the code faster by placing words in the hardest locations first. For example, if it is time to place a horizontal word, and the leftmost vertical word has the letter *z* in it, place the horizontal word where the *z* is (if possible). I am not convinced that this would even be faster.
+* Insisting that a certain word be a pre-decided thing could be fun, and it probably wouldn't take much coding, though, for speed, you would want to place it first, which would make the coding more tricky (unless it is placed as the 0th word).
 
 
 # waffleGen2.py
@@ -61,15 +62,25 @@ I wrote waffleGen2.py to take a solution and makes a puzzle by swapping the lett
 
 The final puzzle should ideally not have trivial moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). My code currently makes sure that there is one solution and that there are no immediate trivial swaps. The significant new code in waffleGen2.py is the colorPuzzle() function (besides what I copied from waffle.py), which colors the yellow letters after coloring all green letters.
 
-I believe that the way to color yellow letters is, first, look at all non-green shared locations to try to color in every shared location we can. Once all shared locations are handled, fill in yellows in non-shared locations, but always count a shared yellow towards both words. This could be considered "hard mode", when the idea is to use the fewest possible non-shared yellows. "Easy mode" would be doing the non-shared locations first.
+A way to color yellow letters is, first, look at all non-green shared locations to try to color in every shared location we can. Once all shared locations are handled, fill in yellows in non-shared locations, but always count a shared yellow towards both words. This could be considered "hard mode", when the idea is to use the fewest possible non-shared yellows. "Easy mode" would be doing the non-shared locations first.
 
-When coloring the *shared* locations (non-shared locations aren't an issue), the order that the locations are considered can affect the number of solutions and the number of yellows. Only the number of *shared* yellows can be affected by the coloring order of the shared yellows. To think about such things, we only need to think about a single letter—let's say, *n*—at a time because other letters being yellow cannot affect any *n* being yellow. The number of solutions could be affected because, for a horizontal word in a puzzle with a single *n* in its solution (and no green *n*s yet), *N-n--* and *n-N--*, where capital *N* means yellow, allow a different number of *n*s in the vertical words. The number of yellows can also be affected. In the following, an × means the location of the *n* in the solution...
+When coloring the *shared* locations (non-shared locations aren't an issue), the order that the locations are considered can affect the number of solutions and the number of yellows. Only the number of *shared* yellows can be affected by the coloring order of the shared yellows. To think about such things, we only need to think about a single letter—let's say, *n*—at a time because other letters being yellow cannot affect any *n* being yellow. The number of solutions could be affected because, for a horizontal word with a single *n* in its solution (and no green *n*s yet), *N-n--* and *n-N--*, where capital *N* means yellow, allow a different number of *n*s in the vertical words. The number of yellows can also be affected. In the following 2 puzzles, a • means the location of the *n* in the solution...
 ```
-  N×N        n×N
-  | |   or   | |
-  N-×        N-×
+  N•N--        n•N--
+  | | •   or   | | •
+  N-•--        N-•--
+
+  N•N        n•N
+  • |   or   • |
+  N-•        N-•
 ```
-Depending on color ordering, coloring all 3 n's can occur, but you could also only color the two *n*s not on the upper left. If this is something you care about, in "hard mode", I believe a good thing to do is: first color the shared locations that removes a letter from a single word (in "easy mode", do the ones that affect two words first). I suggest this strategy because I believe that more shared yellows makes the puzzle harder, but you might want to have a "medium mode"! Because it may be the case that all permutations of a letter on non-green shared locations must be considered, my code does not currently worry about the coloring order the shared locations.
+Depending on color ordering, coloring all 3 n's can occur, but you could also only color the two *n*s not on the upper left. If this is something you care about, in "hard mode", I believe a good thing to do is: first color the shared locations that removes a letter from a single word (in "easy mode", do the ones that affect both words first). I suggest this strategy because I believe that more shared yellows makes the puzzle harder. It may be the case that all permutations of a letter on non-green shared locations must be considered. The second 2D example above shows that it is likely that all permutations must be considered since each of the three *n*s would initially remove the *n* from two words. 
+
+Perhaps, when doing the shared locations, the best choice is to aim for the minimum amount of yellows (prioritize the locations that remove the letter from both words). In a word with a single *n*, *N-N•-* is always a valid coloring, even if neither vertical word has an *n* (note that my code would never do this), but it is needlessly confusing (gross!). Perhaps extra yellows on shared locations are always needlessly confusing. In both of the 2D examples drawn above, the one with the least yellows is the easier puzzle and is the less gross puzzle. My coloring code prioritizes coloring shared locations that remove a letter from two words.
+
+Actually, I believe that minimum yellows is always the best choice. If I start adding non-shared *n*s to the examples above, some especially gross situations arise unless always going for minimum yellows. My code tries to color shared-locations that remove a letter from two words before coloring anything else yellow.
+
+After doing the letters that remove from two words, I choose to do the non-shared locations before doing the rest of the shared locations (making the puzzle less gross and easier), but this would be very easy to change.
 
 I was curious how [https://wafflegame.net/daily](https://wafflegame.net/daily) and [https://wordwaffle.org/unlimited](https://wordwaffle.org/unlimited) handle certain situations, so I did some limited testing.
 * If the solution for a word has a single instance of a letter, but two of the squares—one shared and one not—have that letter (and the other word's solution does not contain that letter), the game did not prefer to make a shared letter yellow, and it also did not prefer to make a non-shared letter yellow. The game should either consistently choose to make the shared letter yellow or the non-shared letter yellow.
@@ -77,4 +88,4 @@ I was curious how [https://wafflegame.net/daily](https://wafflegame.net/daily) a
 * Both online games seem to just color in the first yellow that can be made yellow and associating it with the first letter it can while using the normal left-to-right top-to-bottom order. For simplicity and runtime, I recommend such a strategy eventually (it certainly will eventually be necessary to decide between equivalent choices for non-shared locations), but I also recommend starting with either shared or non-shared locations.
 
 Next steps...
-* Prove whether or not a simple pre-determined coloring order (without exploring all permutations) for shared locations is sufficient to make the puzzle as hard or as easy as possible. If so, consider coding it!
+* Prove whether or not a simple pre-determined coloring order (without exploring all permutations) for shared locations that remove from two words exists to make the puzzle have the fewest yellows. If so, consider coding it! Even not, consider coding the permutations! Regardless, each letter can be done separately.

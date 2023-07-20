@@ -18,7 +18,9 @@
 # freq_map.json is better, but only has 5-letter words,
 #   and my code assumes you will use it for 5-letter words
 #
-# To change the waffle-making algorithm, edit the final "main code" section.
+# Enter the solution in the first section of the code.
+# To change the waffle-making strategy, edit the final "main code" section.
+# Keep rerunning the code until you get a puzzle you like!
 #
 # (c) 2023 Bradley Knockel
 
@@ -28,7 +30,7 @@ from itertools import permutations
 #   so I don't import product from itertools
 # Instead, I do the product myself using a recursive function that loops over permutations.
 
-from random import shuffle
+from random import shuffle, sample
 
 
 #################################################
@@ -94,6 +96,7 @@ u a w m
 talents
 
 """.strip().lower()
+
 
 
 
@@ -221,13 +224,116 @@ for wordNum in range(full):
 
 
 
+
+#################################################
+###### colorPuzzle() function that makes greenMaskAll and lettersAll from puzzle
+#################################################
+
+
+def colorPuzzle(puzzle):
+
+  # For numbering the words...
+  # Initially, horizontal are first (word on top is 0),
+  #   then vertical (word on right is last).
+
+  # deep copy wordsAll[]; greens will later be removed; then yellows will be removed
+  wordsLists = []
+  for i in wordsAll:
+    wordsLists.append(i[:])
+
+
+  # make greenMaskAll
+  greenMaskAll = list(blank)
+  for i,l in enumerate(puzzle):
+    if l.isalpha() and sol[i]==l:
+      greenMaskAll[i] = l
+
+      # remove greens from wordsLists[]
+      if not (i//n1p)&1:   # if in a horizontal word (when row is even)
+        wordNum = (i//n1p)//2
+        wordsLists[ wordNum ].remove(l)
+      if not i&1:    # if in vertical word (when i is even)
+        wordNum = half + (i%n1p)//2
+        wordsLists[ wordNum ].remove(l)
+
+
+
+  # find yellow candidates
+  # Due to the various ways that yellows could be colored in, I am trying to add extra organization
+  #   before choosing where any yellows go.
+  yellowCandidates = []     # [ [ letter, index, words list, trivial? ], ... ]
+  for i,l in enumerate(puzzle):
+    if greenMaskAll[i].isalpha():
+      continue
+
+    countMatches = 0
+    length = 0    # the max number of places the player might think that the yellow goes to
+    words = []
+    if not (i//n1p)&1:   # if in a horizontal word (when row is even)
+      wordNum = (i//n1p)//2
+      length += len(wordsLists[wordNum]) - 1
+      countMatches += wordsLists[wordNum].count(l)
+      words.append(wordNum)
+    if not i&1:    # if in vertical word (when i is even)
+      wordNum = half + (i%n1p)//2
+      length += len(wordsLists[wordNum]) - 1
+      countMatches += wordsLists[wordNum].count(l)
+      words.append(wordNum)
+
+    if countMatches:
+      yellowCandidates.append( (l, i, words, length==1) )
+
+
+
+  # put yellows in lettersAll by making yellow letters upper case
+  # I currently start with shared locations (hard mode), but feel free to do non-shared locations first!
+  lettersAll = puzzle[:]
+  trivialPuzzle = False
+
+  candidates = [(a,b,c,d) for a,b,c,d in yellowCandidates if len(c)==2]   # shared locations
+  for a,b,c,d in candidates:
+    w1 = c[0]  # wordNum1
+    w2 = c[1]  # wordNum2
+    inW1 = a in wordsLists[w1]
+    inW2 = a in wordsLists[w2]
+    if inW1 or inW2:
+
+      lettersAll[b] = lettersAll[b].upper()
+      if d:
+        trivialPuzzle = True
+
+      if inW1:
+        wordsLists[w1].remove(a)
+      if inW2:
+        wordsLists[w2].remove(a)
+
+  candidates = [(a,b,c,d) for a,b,c,d in yellowCandidates if len(c)==1]   # non-shared locations
+  for a,b,c,d in candidates:
+    w1 = c[0]  # wordNum
+    if a in wordsLists[w1]:
+
+      lettersAll[b] = lettersAll[b].upper()
+      if d:
+        trivialPuzzle = True
+
+      wordsLists[w1].remove(a)
+
+
+
+
+
+
+  return "".join(greenMaskAll), "".join(lettersAll), trivialPuzzle
+
+
+
+
 #################################################
 ###### solver function, which returns number of solutions
 #################################################
 
 
-# acts on greenMaskAll and lettersAll
-def count_solutions():
+def count_solutions(greenMaskAll, lettersAll):
   global solCount    # needs to be global for loop_recursive()
 
   wordListAll = []
@@ -366,7 +472,9 @@ def count_solutions():
 
 
 
-
+  #######################
+  ###### see which combinations work
+  #######################
 
   # New numbering system...
   #   Word on top is 0,
@@ -412,6 +520,8 @@ def count_solutions():
       solCount += 1
 
 
+
+
   solCount = 0
 
   loop_recursive([], 0)
@@ -420,13 +530,13 @@ def count_solutions():
 
 
 
+
 #################################################
-###### defined function get_optimal_swaps(), which counts optimal swaps
+###### define function get_optimal_swaps(), which counts optimal swaps
 #################################################
 
 
-# acts on greenMaskAll and lettersAll
-def get_optimal_swaps():
+def get_optimal_swaps(greenMaskAll, lettersAll):
 
   # remove greens and other garbage from sol and lettersAll
   solution = list(sol)
@@ -636,105 +746,6 @@ def get_optimal_swaps():
 
 
 
-#################################################
-###### make greenMaskAll and lettersAll from puzzle
-#################################################
-
-
-def colorPuzzle():
-
-  # For numbering the words...
-  # Initially, horizontal are first (word on top is 0),
-  #   then vertical (word on right is last).
-
-  # deep copy wordsAll; greens will later be removed; then yellows will be removed
-  wordsLists = []
-  for i in wordsAll:
-    wordsLists.append(i[:])
-
-
-  greenMaskAll = list(blank)
-  puzzleUnsolved = puzzle[:]     # list; the opposite of greenMaskAll
-  for i,l in enumerate(puzzle):
-    if l.isalpha() and sol[i]==l:
-      greenMaskAll[i] = l
-      puzzleUnsolved[i] = '.'
-
-      if not (i//n1p)&1:   # if in a horizontal word
-        wordNum = (i//n1p)//2
-        wordsLists[ wordNum ].remove(l)
-      if not (i%n1p)&1:    # if in vertical word
-        wordNum = half + (i%n1p)//2
-        wordsLists[ wordNum ].remove(l)
-
-
-
-  # find yellow candidates
-  yellowCandidates = []     # [ [ letter, index, words list, trivial? ], ... ]
-  for i,l in enumerate(puzzleUnsolved):
-    if not l.isalpha():
-      continue
-
-    countMatches = 0
-    length = 0    # the number of places the player might think that the yellow goes to
-    words = []
-    if not (i//n1p)&1:   # if in a horizontal word
-      wordNum = (i//n1p)//2
-      countMatches += wordsLists[wordNum].count(l)
-      length += len(wordsLists[wordNum]) - 1
-      words.append(wordNum)
-    if not (i%n1p)&1:    # if in vertical word
-      wordNum = half + (i%n1p)//2
-      countMatches += wordsLists[wordNum].count(l)
-      length += len(wordsLists[wordNum]) - 1
-      words.append(wordNum)
-
-    if countMatches:
-      yellowCandidates.append( (l, i, words, length==1) )
-
-
-
-  # put yellows in lettersAll by making them upper case
-  lettersAll = puzzle
-  trivialPuzzle = False
-  for letter in 'abcdefghijklmnopqrstuvwxyz':   # unnecessary
-
-    candidates = [(b,c,d) for a,b,c,d in yellowCandidates if a==letter and len(c)==2]   # shared locations
-
-    for candid in candidates:
-      w1 = candid[1][0]  # wordNum1
-      w2 = candid[1][1]  # wordNum2
-      if letter in wordsLists[w1] or letter in wordsLists[w2]:
-
-        b = candid[0]   # index that is being made yellow
-        lettersAll[b] = lettersAll[b].upper()
-        if candid[2]:
-          trivialPuzzle = True
-
-        if letter in wordsLists[w1]:
-          wordsLists[w1].remove(letter)
-        if letter in wordsLists[w2]:
-          wordsLists[w2].remove(letter)
-
-    candidates = [(b,c,d) for a,b,c,d in yellowCandidates if a==letter and len(c)==1]   # non-shared locations
-
-    for candid in candidates:
-      w1 = candid[1][0]  # wordNum
-      if letter in wordsLists[w1]:
-
-        b = candid[0]   # index that is being made yellow
-        lettersAll[b] = lettersAll[b].upper()
-        if candid[2]:
-          trivialPuzzle = True
-
-        wordsLists[w1].remove(letter)
-
-
-
-
-  return "".join(greenMaskAll), "".join(lettersAll), trivialPuzzle
-
-
 
 
 #################################################
@@ -763,32 +774,105 @@ def strategy1():
 
 
 
-### analyze puzzle
+
+
+### Strategy 2: randomly shuffle some things
+
+greenMask = """
+
+m..
+. .
+...
+
+""".strip().lower()    # warning: not checked for consistency with sol
+
+
+def strategy2():
+
+  puzzle = list(sol)
+
+  temp = list(sol)
+  for i in range(len(puzzle)-1,-1,-1):
+    if greenMask[i].isalpha():
+      temp.pop(i)
+
+  temp = list("".join(temp).replace(' ', '').replace('\n', ''))
+  shuffle(temp)
+
+  # put temp back into puzzle
+  j=0
+  for i,l in enumerate(puzzle):
+    if l.isalpha() and not greenMask[i].isalpha():
+      puzzle[i] = temp[j]
+      j += 1
+
+  return puzzle
+
+
+
+
+### Strategy 3: do random swaps until swap goal is met or exceeded (or until multiple solutions are found)
+
+swapGoal = 15   # desired optimal swaps in puzzle
+
+def strategy3():
+
+  puzzle = list(sol)
+
+  solCount = 1
+  swaps = 0
+  while solCount==1 and swaps < swapGoal:
+
+    temp = list("".join(puzzle).replace(' ', '').replace('\n', ''))
+
+    # do a random swap
+    i1, i2 = sample(range(len(temp)), 2)
+    temp[i1], temp[i2] = temp[i2], temp[i1]
+
+    # put temp back into puzzle
+    j=0
+    for i,l in enumerate(puzzle):
+      if l.isalpha():
+        puzzle[i] = temp[j]
+        j += 1
+
+    greenMaskAll, lettersAll, trivial = colorPuzzle(puzzle)
+    solCount = count_solutions(greenMaskAll, lettersAll)
+    swaps = get_optimal_swaps(greenMaskAll, lettersAll)
+
+    print(".")
+
+  return puzzle
+
+
+
+
+### make and analyze puzzle
 
 trivial = True
 
 while trivial or solCount!=1:
 
-  puzzle = strategy1()
+  puzzle = strategy3()    # choose strategy here
 
-  greenMaskAll, lettersAll, trivial = colorPuzzle()
+  greenMaskAll, lettersAll, trivial = colorPuzzle(puzzle)
 
   print()
   print(sol)
   print()
-  print(greenMaskAll)
+  print(greenMaskAll)   # print greens
   print()
-  print(lettersAll)
+  print(lettersAll)     # yellows are capitalized
   print()
   print("  Puzzle has a trivial move?", trivial)
   print()
 
-  solCount = count_solutions()
+  solCount = count_solutions(greenMaskAll, lettersAll)
 
   print("  solution count =", solCount)
   print()
 
-  swaps = get_optimal_swaps()
+  swaps = get_optimal_swaps(greenMaskAll, lettersAll)
 
   print("  optimal swaps =", swaps)
   print()

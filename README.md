@@ -21,6 +21,7 @@ The word lengths must be an odd number larger than 1. Note that 5-letter words u
 
 Next steps...
 * Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word square waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word square waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle, which my code can already solve, would be more interesting!
+* Prove that swapToTwoGreens() is safe!
 
 
 # waffleGen.py
@@ -52,13 +53,28 @@ Next steps...
 
 # waffleGen2.py
 
-I wrote waffleGen2.py to take a solution and makes a puzzle by swapping the letters. It uses the same solver and swap counting algorithm as waffle.py. Currently, it is a toolbox for you to edit the final "main code" section. The only strategy I put in the code is just shuffling all the letters, which can produce puzzles that take forever for the code to solve due to not having many greens, so you should write your own strategies that have more greens, perhaps to shoot for a certain number of optimal swaps. You could just do one random(ish) swap at a time then check the optimal swaps until the desired optimal swaps is obtained, while also making sure that there is just the one solution. The final puzzle should ideally also not have obvious moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). My code currently makes sure that there is one solution and that there are no trivial swaps. I first needed to figure out how to color the yellow letters after coloring all green letters.
+I wrote waffleGen2.py to take a solution and makes a puzzle by swapping the letters. It uses the same solver and swap counting algorithm as waffle.py (basically copied and pasted). Currently, it is a toolbox for you to edit the final "main code" section. You can select between strategies...
+* completely shuffling all the letters, which, for large puzzles, can produce puzzles that take forever for the code to solve due to not having many greens (especially greens in shared locations)
+* force certain locations to be green then shuffle all the letters
+* keep doing random swaps until you get a certain number of optimal swaps or more (or until multiple solutions occur)
+* write your own strategies!
 
-I believe that the way to color yellow letters is, first, look at all non-green shared locations to try to color in every shared location we can. Once all shared locations are handled, fill in yellows in non-shared locations, but always count a shared yellow towards both words.
+The final puzzle should ideally not have trivial moves where a yellow letter has only one letter that it could swap with by only thinking about colors of letters (without even taking into account what the actual letters are). My code currently makes sure that there is one solution and that there are no immediate trivial swaps. The significant new code in waffleGen2.py is the colorPuzzle() function (besides what I copied from waffle.py), which colors the yellow letters after coloring all green letters.
+
+I believe that the way to color yellow letters is, first, look at all non-green shared locations to try to color in every shared location we can. Once all shared locations are handled, fill in yellows in non-shared locations, but always count a shared yellow towards both words. This could be considered "hard mode", when the idea is to use the fewest possible non-shared yellows. "Easy mode" would be doing the non-shared locations first.
+
+When coloring the *shared* locations (non-shared locations aren't an issue), the order that the locations are considered can affect the number of solutions and the number of yellows. Only the number of *shared* yellows can be affected by the coloring order of the shared yellows. To think about such things, we only need to think about a single letter—let's say, *n*—at a time because other letters being yellow cannot affect any *n* being yellow. The number of solutions could be affected because, for a horizontal word in a puzzle with a single *n* in its solution (and no green *n*s yet), *N-n--* and *n-N--*, where capital *N* means yellow, allow a different number of *n*s in the vertical words. The number of yellows can also be affected. In the following, an × means the location of the *n* in the solution...
+```
+  n-n×-
+  | | |
+  n-×--
+```
+Depending on color ordering, coloring all 3 n's can occur, but you could also only color the two *n*s not on the upper left. If this is something you care about, in "hard mode", I believe a good thing to do is: first color the shared locations that removes a letter from a single word (in "easy mode", do the ones that affect two words first). I suggest this strategy because I believe that more shared yellows makes the puzzle harder, but you might want to have a "medium mode"! Because it may be the case that all permutations of a letter on non-green shared locations must be considered, my code does not currently worry about the coloring order the shared locations.
 
 I was curious how [https://wafflegame.net/daily](https://wafflegame.net/daily) and [https://wordwaffle.org/unlimited](https://wordwaffle.org/unlimited) handle certain situations, so I did some limited testing.
 * If the solution for a word has a single instance of a letter, but two of the squares—one shared and one not—have that letter (and the other word's solution does not contain that letter), the game did not prefer to make a shared letter yellow, and it also did not prefer to make a non-shared letter yellow. The game should either consistently choose to make the shared letter yellow or the non-shared letter yellow.
 * If a shared letter is yellow and appears once in both words' solution, a duplicate of that letter wasn't yellow if in one of the words, but was yellow if in the other word. This might be thought to be a bug because the game should either consistently try to color the fewest possible non-shared letters yellow or consistently try to color the most possible non-shared letters yellow.
-* Both online games seem to just color in the first yellow that can be made yellow and associating it with the first letter it can while using the normal left-to-right top-to-bottom order. For simplicity and runtime, I recommend such a strategy eventually, though I still recommend trying to start with shared locations.
+* Both online games seem to just color in the first yellow that can be made yellow and associating it with the first letter it can while using the normal left-to-right top-to-bottom order. For simplicity and runtime, I recommend such a strategy eventually (it certainly will eventually be necessary to decide between equivalent choices for non-shared locations), but I also recommend starting with either shared or non-shared locations.
 
-
+Next steps...
+* Prove whether or not a simple pre-determined coloring order (without exploring all permutations) for shared locations is sufficient to make the puzzle as hard or as easy as possible. If so, consider coding it!

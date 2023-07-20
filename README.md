@@ -65,9 +65,9 @@ I believe that the way to color yellow letters is, first, look at all non-green 
 
 When coloring the *shared* locations (non-shared locations aren't an issue), the order that the locations are considered can affect the number of solutions and the number of yellows. Only the number of *shared* yellows can be affected by the coloring order of the shared yellows. To think about such things, we only need to think about a single letter—let's say, *n*—at a time because other letters being yellow cannot affect any *n* being yellow. The number of solutions could be affected because, for a horizontal word in a puzzle with a single *n* in its solution (and no green *n*s yet), *N-n--* and *n-N--*, where capital *N* means yellow, allow a different number of *n*s in the vertical words. The number of yellows can also be affected. In the following, an × means the location of the *n* in the solution...
 ```
-  n-n×-
-  | | |
-  n-×--
+  N×N        n×N
+  | |   or   | |
+  N-×        N-×
 ```
 Depending on color ordering, coloring all 3 n's can occur, but you could also only color the two *n*s not on the upper left. If this is something you care about, in "hard mode", I believe a good thing to do is: first color the shared locations that removes a letter from a single word (in "easy mode", do the ones that affect two words first). I suggest this strategy because I believe that more shared yellows makes the puzzle harder, but you might want to have a "medium mode"! Because it may be the case that all permutations of a letter on non-green shared locations must be considered, my code does not currently worry about the coloring order the shared locations.
 

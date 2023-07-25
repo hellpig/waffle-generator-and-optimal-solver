@@ -484,7 +484,7 @@ def count_solutions(greenMaskAll, lettersAll):
           wordList.append((data[word], word))
 
         else:
-          # frequency is unknown, so I put 1. Mathematica's (or WolframAlpha's ??) WordFrequencyData[] could add frequencies to words_alpha.txt
+          # frequency is unknown, so I put 1
           wordList.append((1, word))
 
     wordListAll.append(wordList)
@@ -880,6 +880,7 @@ while trivial or solCount!=1:
   print(sol)
   print()
   print(greenMaskAll)   # print greens
+  print("  There are", greenMaskAll.count('.'), "unsolved locations.")
   print()
   print(lettersAll)     # yellows are capitalized
   print()

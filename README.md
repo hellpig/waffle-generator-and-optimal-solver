@@ -11,16 +11,16 @@ All the rectangular ones that I can find online are square. The puzzles...
 
 Waffle puzzles are not super difficult by hand. Though, writing the code was a bit tricky (that is to say, fun!).
 
-Trying to then minimize the number of swaps was most interesting. This is trivial if there are no duplicates of initially-non-green letters, but duplicates often occur. I brute force all permutations in the case of duplicates. See comments in the code for more details.
+Trying to then minimize the number of swaps was most interesting. This is trivial if there are no duplicates of initially-non-green letters, but duplicates often occur. If duplicates occur in a puzzle, swapping the letters that do not have duplicates is also trivial. I brute force all permutations in the case of duplicates. See comments in the code for more details.
 
-My code has a commented-out call to swapToTwoGreens() that can greatly speed up the permutations. The idea is to swap two letters if they both become green after. Starting from the upper left then going right, it swaps the first pairs that work. I am not sure if this will affect my code's ability to find optimal swaps! I have done extensive experimental testing, and swapToTwoGreens() seems to be safe, but I would like a proof.
+My code has a commented-out call to swapToTwoGreens() that can greatly speed up the permutations. The idea is to swap two letters if they both become green after. Starting from the upper left then going right, it swaps the first pairs that work. I am not sure if this will affect my code's ability to find optimal swaps! I have done extensive experimental testing, and swapToTwoGreens() seems to be safe, but I would like a proof. I especially want a proof because the claim "a swap that creates no greens is always bad" is *not* true. A minimal proof is to take *abcd* as the correct order then *dcab* optimally has 3 swaps, and *cdab*, which is obtained from *dcab* after a single no-green-producing swap, optimally takes 2 swaps.
 
 To run the code, enter the initial puzzle into the top section of the code in the format provided within the code. That is, you need to set two and only two variables. You will also need to download the word-list file(s) in the links specified at the top of the code. The solution and step-by-step optimal swaps will be output to a terminal (or, in Windows, PowerShell or whatever).
 
 The word lengths must be an odd number larger than 1. Note that 5-letter words use a better word list, but the list only has 5-letter words. The word list used for other sizes has lowercase English words of all lengths.
 
 Next steps...
-* Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word square waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word square waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle, which my code can already solve, would be more interesting!
+* Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word square waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word square waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle, which my code can already solve, would be more interesting! I suppose I could consider waffles where parallel words "touch" by having a 4×4 block of 16 words. There are no longer non-shared location on the board, but that's okay I guess!
 * Prove that swapToTwoGreens() is safe!
 
 
@@ -46,8 +46,36 @@ My current interesting results for *square* waffles are...
 * Using the full 7-letter-word list, after many minutes, solutions do eventually start to print. After roughly an hour, solutions started to print for 9-letter words! Though some of the words were stupidly uncommon. The first to print was *aardvarks aaronical rabatting rabbanist nearabout vitiation chibinite rhinolite latinless sightless* followed shortly by *aardvarks aaronical rabatting rabbanist nearabout vitiation chilicote rhizopods lutanists sightsees*. Of course, neither search was any real progress through the entire search space.
 * There are no 21-letter-or-larger-word waffles. After roughly an hour when I stopped the code, no puzzle solutions were found for 19-letter words or 17-letter words. The 19-letter words at least made significant progress through the search space, and, if I cared, I could have finished it.
 
+I want to get frequency data for words of all lengths. Mathematica's (or WolframAlpha's??) WordFrequencyData[] could add frequencies to words_alpha.txt, but I don't have access to Mathematica. I then was talking with [https://github.com/CodingKraken](https://github.com/CodingKraken), and he gave me the idea to use the *wordfreq* module and use the word list file found at [https://github.com/rspeer/wordfreq/tree/master/wordfreq/data](https://github.com/rspeer/wordfreq/tree/master/wordfreq/data). Here is my code to make frequency lists of correct size...
+```
+from msgpack import unpackb 
+from wordfreq import word_frequency
+import json
+
+# first, download file from https://github.com/rspeer/wordfreq/tree/master/wordfreq/data
+with open("large_en.msgpack", 'rb') as f:
+  dataLong = unpackb(f.read())
+
+lengths = [3, 5, 7, 9]       # choose word lengths
+freqCutoffs = [1E-5, 1E-5, 1E-5, 1E-5]
+
+data = [{} for i in range(len(lengths))]
+for wordGroup in dataLong[1:]:
+  for word in wordGroup:
+    freq = word_frequency(word, 'en')
+    if word.islower() and word.isalpha() and word.isascii():
+      for j in range(len(lengths)):
+        if len(word)==lengths[j] and freq > freqCutoffs[j]:
+          data[j][word] = freq
+
+for j in range(len(lengths)):
+  print(lengths[j], len(data[j]))
+  with open("words" + str(lengths[j]) + ".json", "w") as f:
+    json.dump(data[j], f)
+```
+I believe you need at least Python 3.7 to run the above code since isascii() was introduced in 3.7. I was using 3.11. I haven't changed waffleGen.py yet, but feel free to use the resulting .json files for even 5-letter words!
+
 Next steps...
-* Get frequency data for words of all lengths. Mathematica's (or WolframAlpha's??) WordFrequencyData[] could add frequencies to words_alpha.txt, but I don't have access to Mathematica.
 * Maybe I could make the code faster by placing words in the hardest locations first. For example, if it is time to place a horizontal word, and the leftmost vertical word has the letter *z* in it, place the horizontal word where the *z* is (if possible). I am not convinced that this would even be faster.
 * Insisting that a certain word be a pre-decided thing could be fun, and it probably wouldn't take much coding, though, for speed, you would want to place it first, which would make the coding more tricky (unless it is placed as the 0th word).
 

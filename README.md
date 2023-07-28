@@ -34,7 +34,7 @@ If the length of a word list is not changed, the length of the word does not gre
 
 If n1 and n2 are the number of letters per word, the number of words of length n1 in the waffle is (n2 + 1)/2, and the number of shared letters is (n2 + 1)(n1 + 1)/4. If num1 is the number of words in the n1 word list, and num2 is the number of words in the n2 word list, then, assuming that letters appear in a word independent of nearby letters, the number of puzzles found should be roughly...
 $$\frac{num1^{\frac{n2 + 1}{2}} num2^{\frac{n1 + 1}{2}}}{2.01^{(n2 + 1)(n1 + 1)}}$$
-Note that I used approximations in the numerator instead of using the permutation formula. The denominator arises because the probability that a valid waffle can be made from a permutation is 0.06124^(number of shared letters), and (1/0.06124)^(1/4) equals 2.01. In the case of square waffles, you should get less than this because then symmetric and repeated-word solutions are prevented.
+Note that, for square waffles, the numerator is an approximation instead of using the permutation formula. The denominator arises because the probability that a valid waffle can be made from a permutation is 0.06124^(number of shared letters), and (1/0.06124)^(1/4) equals 2.01. In the case of square waffles, you should get less than this because then symmetric and repeated-word solutions are prevented.
 
 Where did the 0.06124 come from? I first got [letter frequencies in the dictionary](https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html). I will assume that all word lists have the same frequencies and that the location of the letters in the word (odd vs. even letter location) makes no difference. By summing the squares of the frequencies, I get 0.06124.
 
@@ -126,7 +126,7 @@ I define "solid" waffle as those with no "holes". See the files whose names star
 The approximate number-of-puzzles formula now becomes...
 $$\frac{num1^{n2} num2^{n1}}{16.33^{n1 n2}}$$
 
-In general, the above prediction is over 10 times larger than what is observed. A part of this is not using the entire permutation formula.
+Square waffles should have a bit less. In general, the above prediction is over 10 times larger than what is observed.
 
 For 4×5, the following are most of the few good puzzles...
 ```

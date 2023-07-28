@@ -147,19 +147,25 @@ print("  Word list 2 is", len(data2), str(n2) + "-letter words.")
 def loop_recursive(w, n):
 
   if n < n2:
+
+    if n < n1p:
+      temp1 = [ w[i][n] for i in range(1,n,2) ]
+
     for w1 in data1:   # horizontal word
 
       if n < n1p:   # if there are still more vertical words to be placed
 
-        if [ w1[i] for i in range(0,n,2) ] != [ w[i][n] for i in range(1,n,2) ]:
+        if [ w1[i] for i in range(0,n,2) ] != temp1:
           continue
 
         nn = n + 1
         ww = w + [w1]
 
+        temp2 = [ ww[i][n] for i in range(0,nn,2) ]
+
         for w2 in data2:    # vertical word
 
-          if [ w2[i] for i in range(0,nn,2) ] != [ ww[i][n] for i in range(0,nn,2) ]:
+          if [ w2[i] for i in range(0,nn,2) ] != temp2:
             continue
 
           loop_recursive(ww + [w2], nn + 1)

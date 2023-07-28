@@ -20,7 +20,7 @@ To run the code, enter the initial puzzle into the top section of the code in th
 The word lengths must be an odd number larger than 1. Note that 5-letter words use a better word list, but the list only has 5-letter words. The word list used for other sizes has lowercase English words of all lengths.
 
 Next steps...
-* Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word square waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word square waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle, which my code can already solve, would be more interesting! I suppose I could consider waffles where parallel words "touch" by having a 4×4 block of 16 words. There are no longer non-shared location on the board, but that's okay I guess!
+* Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word square waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word square waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle, which my code can already solve, would be more interesting!
 * Prove that swapToTwoGreens() is safe!
 
 
@@ -32,11 +32,11 @@ I made waffleGen.py to generate all possible waffle solutions of any rectangular
 
 If the length of a word list is not changed, the length of the word does not greatly affect runtime. This is because few scenarios make it past 3 or 4 words. Regardless of word size, word lists should be less than 1000 if you want to finish them in a reasonable amount of time. If you want to use multiple CPU cores, quickly modify my code so that each core could be assigned different starting words, keeping in mind that starting words with a starting letter that is a common starting letter in the word list will likely take longer to run.
 
-If n1 and n2 are the number of letters per word, the number of words of length n1 in the waffle is (n2 + 1)/2, and the number of shared letters is (n2 + 1)(n1 + 1)/4. If num1 is the number of words in the n1 word list, and num2 is the number of words in the n2 word list, then the number of puzzles found should be roughly...
+If n1 and n2 are the number of letters per word, the number of words of length n1 in the waffle is (n2 + 1)/2, and the number of shared letters is (n2 + 1)(n1 + 1)/4. If num1 is the number of words in the n1 word list, and num2 is the number of words in the n2 word list, then, assuming that letters appear in a word independent of nearby letters, the number of puzzles found should be roughly...
 $$\frac{num1^{\frac{n2 + 1}{2}} num2^{\frac{n1 + 1}{2}}}{2.01^{(n2 + 1)(n1 + 1)}}$$
 Note that I used approximations in the numerator instead of using the permutation formula. The denominator arises because the probability that a valid waffle can be made from a permutation is 0.06124^(number of shared letters), and (1/0.06124)^(1/4) equals 2.01. In the case of square waffles, you should get less than this because then symmetric and repeated-word solutions are prevented.
 
-Where did the 0.06124 come from? I first got [letter frequencies in the dictionary](https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html). I will assume that all word lists have the same frequencies and that the location of the letters in the word (middle vs beginning vs end) makes no difference. By summing the squares of the frequencies, I get 0.06124.
+Where did the 0.06124 come from? I first got [letter frequencies in the dictionary](https://www3.nd.edu/~busiforc/handouts/cryptography/letterfrequencies.html). I will assume that all word lists have the same frequencies and that the location of the letters in the word (odd vs. even letter location) makes no difference. By summing the squares of the frequencies, I get 0.06124.
 
 My current interesting results for *square* waffles are...
 * Because I have frequency data for 5-letter words, I can easily reduce the word list, which is a very successful strategy! With a list of 156 words (from a frequency cutoff of 0.0001), all 31 waffle solutions were printed within seconds! The prediction for the 31 seems to be 174, which is (156/66)^6, where the 66 is 2.01^6. If using the actual permutation formula instead of 156^6, the prediction becomes 158. Dividing by 2 to remove symmetric solutions gives 79, which is between 31 and 92, where 92 is the number of solutions that my code prints if words are allowed to be repeated within a puzzle. I would expect the prediction to be between 31 and 92 because the 31 does not include repeats, but, when including repeats, you can get more waffles than you should (as can be seen from the ratio of 92 to 31) because repeated words can fit together in a waffle shape with high probability.
@@ -57,7 +57,7 @@ with open("large_en.msgpack", 'rb') as f:
   dataLong = unpackb(f.read())
 
 lengths = [3, 5, 7, 9]       # choose word lengths
-freqCutoffs = [1E-5, 1E-5, 1E-5, 1E-5]
+freqCutoffs = [1E-5, 1E-5, 1E-6, 1E-6]   # set frequency cutoffs
 
 data = [{} for i in range(len(lengths))]
 for wordGroup in dataLong[1:]:
@@ -73,7 +73,7 @@ for j in range(len(lengths)):
   with open("words" + str(lengths[j]) + ".json", "w") as f:
     json.dump(data[j], f)
 ```
-I believe you need at least Python 3.7 to run the above code since isascii() was introduced in 3.7. I was using 3.11. I haven't changed waffleGen.py yet, but feel free to use the resulting .json files for even 5-letter words!
+I believe you need at least Python 3.7 to run the above code since isascii() was introduced in 3.7. I was using 3.11. I haven't changed waffleGen.py yet, but feel free to use the resulting .json files for even 5-letter words! Note that I exclusively use the above word lists in my solidWaffleGen.py folder.
 
 Next steps...
 * Maybe I could make the code faster by placing words in the hardest locations first. For example, if it is time to place a horizontal word, and the leftmost vertical word has the letter *z* in it, place the horizontal word where the *z* is (if possible). I am not convinced that this would even be faster.
@@ -117,3 +117,80 @@ I was curious how [https://wafflegame.net/daily](https://wafflegame.net/daily) a
 
 Next steps...
 * Prove whether or not a simple pre-determined coloring order (without exploring all permutations) for shared locations that remove from two words exists to make the puzzle have the fewest yellows. If so, consider coding it! Even if not, consider coding the permutations! Regardless, each letter can be done separately.
+
+
+# "solid" waffles
+
+I define "solid" waffle as those with no "holes". See the files whose names start with *solid*.
+
+The approximate number-of-puzzles formula now becomes...
+$$\frac{num1^{n2} num2^{n1}}{16.33^{n1 n2}}$$
+
+In general, the above prediction is over 10 times larger than what is observed. A part of this is not using the entire permutation formula.
+
+For 4×5, the following are most of the few good puzzles...
+```
+draw
+rare
+idea
+liar
+loss
+
+ages
+draw
+mate
+idea
+tent
+
+cats
+hurt
+idea
+liar
+lots
+
+odds
+wrap
+note
+even
+rest
+
+caps
+hurt
+idea
+list
+dose
+
+caps
+hurt
+idea
+list
+lose
+
+caps
+hurt
+idea
+list
+loss
+```
+
+For 3×6, the following is most of the few good puzzles...
+```
+dog
+era
+far
+end
+age
+ten
+```
+Here is a good 3×7...
+```
+its
+net
+see
+one
+far
+age
+red
+```
+
+Ignoring a word length of 2, this leaves 3×3, 3×4, 3×5, and 4×4.

@@ -27,8 +27,6 @@ import json
 #################################################
 
 
-### spaces (' ') are for the holes in the waffle shape.
-
 
 sol = """
 
@@ -37,6 +35,16 @@ rare
 idea
 liar
 loss
+
+""".strip().lower()
+
+
+sol = """
+
+drill
+radio
+areas
+wears
 
 """.strip().lower()
 
@@ -679,7 +687,7 @@ def strategy1():
 greenMask = """
 
 m..
-. .
+...
 ...
 
 """.strip().lower()    # warning: not checked for consistency with sol

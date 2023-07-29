@@ -30,7 +30,6 @@ import json
 
 ##########   set greenMaskAll   ##########
 ### A '.' is a placeholder for when the letter is unknown.
-### The spaces (' ') are for the holes in the waffle shape.
 
 
 greenMaskAll = """
@@ -40,6 +39,16 @@ greenMaskAll = """
 ....
 ....
 ....
+
+""".strip().lower()
+
+
+greenMaskAll = """
+
+.....
+.....
+.....
+.....
 
 """.strip().lower()
 
@@ -62,6 +71,14 @@ DIrr
 """.strip()
 
 
+lettersAll = """
+
+aIosR
+AlRwe
+ldARE
+SdRIA
+
+""".strip()
 
 
 

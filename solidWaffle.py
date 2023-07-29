@@ -1,22 +1,16 @@
 #!/usr/bin/env python3.11
 #
-# Find optimal (fewest swap) solutions for rectangular Waffle puzzles.
-# Any odd word size greater than 1 is currently supported!
+# Find optimal (fewest swap) solutions for rectangular "solid" Waffle puzzles.
+# Any word size greater than 1 is currently supported!
 #
 # Some examples of square puzzles online...
 #   https://wafflegame.net/daily       5×5
 #   https://wafflegame.net/deluxe      7×7
 #   https://wordwaffle.org/unlimited   3×3 can be found here
 # I cannot find any non-square rectangular puzzles online.
+# I cannot find any "solid" puzzles online.
 #
-# First, download freq_map.json (5-letter-word frequencies) from
-#   https://github.com/3b1b/videos/tree/master/_2022/wordle/data
-# and/or download words_alpha.txt from
-#   https://github.com/dwyl/english-words
-#
-# words_alpha.txt works for any size words.
-# freq_map.json is better, but only has 5-letter words,
-#   and my code assumes you will use it for 5-letter words
+# First, generate the words#.json files as described in README.md
 #
 # (c) 2023 Bradley Knockel
 
@@ -26,6 +20,7 @@ from itertools import permutations
 #   so I don't import product from itertools
 # Instead, I do the product myself using a recursive function that loops over permutations.
 
+import json
 
 
 #################################################
@@ -40,69 +35,11 @@ from itertools import permutations
 
 greenMaskAll = """
 
-m..
-. .
-...
-
-""".strip().lower()
-
-
-greenMaskAll = """
-
-w...f
-. . r
-..t..
-. . .
-t...e
-
-""".strip().lower()
-
-
-greenMaskAll = """
-
-.....
-. . .
-.....
-. . .
-.....
-
-
-""".strip().lower()
-
-
-greenMaskAll = """
-
-..t.n..
-. . . .
-e.p.a.n
-. p r .
-e.i.e.t
-. . . .
-..g.t..
-
-""".strip().lower()
-
-
-greenMaskAll = """
-
-a...t
-. . .
-..t..
-. c .
-..ow.
-. . .
-s...s
-
-""".strip().lower()
-
-
-greenMaskAll = """
-
-a.....s
-. . . .
-..tco..
-. . w .
-t.....s
+....
+.a..
+....
+....
+....
 
 """.strip().lower()
 
@@ -116,68 +53,11 @@ t.....s
 
 lettersAll = """
 
-mhA
-h a
-APS
-
-""".strip()
-
-
-lettersAll = """
-
-wIHnf
-h s r
-zetIN
-o R r
-tfERe
-
-""".strip()
-
-
-lettersAll = """
-
-HeTeh
-i w E
-NfznR
-o t r
-IrfsR
-
-""".strip()
-
-
-lettersAll = """
-
-UotsnTi
-d N x D
-eLpvadn
-o p r s
-eNieeet
-e a E g
-HlgEtIS
-
-""".strip()
-
-
-lettersAll = """
-
-amUOt
-a E r
-nhtem
-T c T
-ToowL
-S b i
-sauEs
-
-""".strip()
-
-
-lettersAll = """
-
-aanTTSs
-m h o a
-UEtcobU
-O e w E
-trmTLis
+IWRE
+aaEA
+sOlR
+AsdL
+DIrr
 
 """.strip()
 
@@ -195,20 +75,20 @@ trmTLis
 n1 = len(greenMaskAll.split()[0])    # length of horizontal words
 n2 = len(greenMaskAll.split('\n'))   # length of vertical words
 
-if n1 < 3 or not n1&1 or n2 < 3 or not n2&1:
-  print("  Error: only odd sizes greater than 1!")
+if n1 < 2 or n2 < 2:
+  print("  Error: only sizes greater than 1!")
   exit()
 
 
 # useful
-half = n2//2 + 1         # the number of horizontal words
-halfVer = n1//2 + 1      # the number of vertical words
-full = (n1 + n2)//2 + 1   # the number of words
-n1p = n1+1
+full = n1 + n2    # the number of words
+n1p = n1 + 1
+n1d = 2*n1
+n2d = 2*n2
 
 # make blank board (eventually also used for printing swaps)
-temp = "." * n1 + "\n" + ". " * (n1//2) + ".\n"
-blank = temp * (n2//2) + "." * n1
+temp = "." * n1 + "\n"
+blank = temp * (n2-1) + "." * n1
 
 
 # check for consistency
@@ -223,76 +103,34 @@ for i in range(len(greenMaskAll)):
     print("  Error: greenMaskAll does not match lettersAll!")
     exit()
 for i in range(len(greenMaskAll)):   # check against structure of blank
-  a =  blank[i] == " " and (greenMaskAll[i] != " " or lettersAll[i] != " ")
   b =  blank[i] == "\n" and (greenMaskAll[i] != "\n" or lettersAll[i] != "\n")
   c =  blank[i] == "." and not (greenMaskAll[i] == "." or greenMaskAll[i].isalpha())
   d =  blank[i] == "." and not lettersAll[i].isalpha()
-  if a or b or c or d:
+  if b or c or d:
     print("  Error: invalid input!")
     exit()
 
 
 
-dataLong = False   # do not change
-
 
 
 # load first word list
-isFrequencyMap1 = False
-if n1==5:   # this list is better, but only has 5-letter words
-
-  import json
-  isFrequencyMap1 = True
-  with open('freq_map.json') as f:
-    data1 = json.load(f)
-
-else:
-
-  with open('words_alpha.txt') as f:
-    dataLong = f.read().split()
-
-  data1 = []
-  for word in dataLong:
-    if len(word)==n1:
-      data1.append(word)
-
-
+with open('words' + str(n1) + '.json') as f:
+  data1 = json.load(f)
 
 # load 2nd word list
-
 if n1==n2:
   data2 = data1
-  isFrequencyMap2 = isFrequencyMap1
 else:
-  isFrequencyMap2 = False
-  if n2==5:   # this list is better, but only has 5-letter words
-
-    import json
-    isFrequencyMap2 = True
-    with open('freq_map.json') as f:
-      data2 = json.load(f)
-
-  else:
-
-    if not dataLong:
-      with open('words_alpha.txt') as f:
-        dataLong = f.read().split()
-
-    data2 = []
-    for word in dataLong:
-      if len(word)==n2:
-        data2.append(word)
-
-
-
-del dataLong   # try to free up RAM
+  with open('words' + str(n2) + '.json') as f:
+    data2 = json.load(f)
 
 
 
 
 # make countsAll
 countsAll = {}
-goodLetters = lettersAll.replace(' ', '').replace('\n', '').lower()
+goodLetters = lettersAll.replace('\n', '').lower()
 for i in 'abcdefghijklmnopqrstuvwxyz':
   countsAll[i] = goodLetters.count(i)
 
@@ -313,21 +151,19 @@ wordListAll = []
 for wordNum in range(full):
 
 
-    # take the correct slice and get correct word list (data), number of letters (nl), and isFrequencyMap
-    if wordNum < half:   # horizontal words
-      start = 2 * wordNum * n1p
+    # take the correct slice and get correct word list (data) and number of letters (nl)
+    if wordNum < n2:   # horizontal words
+      start = wordNum * n1p
       greenMask = greenMaskAll[ start : start+n1 ]
       letters = lettersAll[ start : start+n1 ]
       data = data1
       nl = n1
-      isFrequencyMap = isFrequencyMap1
     else:
-      start = 2 * (wordNum - half)
+      start = wordNum - n2
       greenMask = greenMaskAll[ start :: n1p ]
       letters = lettersAll[ start :: n1p ]
       data = data2
       nl = n2
-      isFrequencyMap = isFrequencyMap2
 
 
     # make counts
@@ -356,7 +192,7 @@ for wordNum in range(full):
     ###### make letterList[]
     #######################
 
-    # letterList[] = [ [letter, badLocations, countMin, countMax] , ...]
+    # letterList[] = [ [letter, badLocations, countMax] , ...]
     letterList = []
 
     for i,j in enumerate(letters):   # j is a letter
@@ -369,15 +205,12 @@ for wordNum in range(full):
             if letters[k]==j.lower() and letters[k]==greenMask[k]:
               count += 1
 
-          # assume that the other word has not had all of its other letters solved
-          countEven = letters[0::2].count(j)   # yellows that could be part of another word instead
-
           badLocations = [k for k in range(nl) if wordNoGreen.upper()[k] == j]
 
           if j.lower() in wordNoGreen:   # if there is a grey of the letter
-            letterList.append([ j.lower(), badLocations, count - countEven, count ])
+            letterList.append([ j.lower(), badLocations, count ])
           else:
-            letterList.append([ j.lower(), badLocations, count - countEven, counts[j.lower()] ])
+            letterList.append([ j.lower(), badLocations, counts[j.lower()] ])
 
         # is j is a green with no yellows of the same letter
         elif j==greenMask[i] and j.upper() not in letters:
@@ -394,7 +227,7 @@ for wordNum in range(full):
               if letters[k]==j and letters[k]==greenMask[k]:
                 count += 1
 
-            letterList.append([ j, [], count, count ])
+            letterList.append([ j, [], count ])
 
 
 
@@ -418,22 +251,17 @@ for wordNum in range(full):
       # letterList[]
       go = True
       for entry in letterList:
-        if word.count(entry[0]) < entry[2] or word.count(entry[0]) > entry[3] or entry[0] in [word[i] for i in entry[1]]:
+        if word.count(entry[0]) > entry[2] or entry[0] in [word[i] for i in entry[1]]:
           go = False
           break
 
       if go:
-        if isFrequencyMap:
 
           # do not print words with low frequency (optional)
           #if data[word] <= 1e-7:
           #  continue
 
           wordList.append((data[word], word))
-
-        else:
-          # frequency is unknown, so I put 1
-          wordList.append((1, word))
 
     wordListAll.append(wordList)
 
@@ -446,7 +274,7 @@ for wordNum in range(full):
     print("\n word " + str(wordNum) + ":   " + greenMask + "   " + letters)
     #print(letterList)
 
-    for entry in wordList:   #sorted(wordList, reverse=True):   # sorting only does something when there is frequency data for both word lists
+    for entry in sorted(wordList, reverse=True):   # sorting only does something when there is frequency data for both word lists
 
       print("  " + entry[1])
       #print("  " + entry[1], entry[0])
@@ -465,15 +293,15 @@ for wordNum in range(full):
 #   If there are no vertical or horizontal words remaining,
 #   the word is still counted but is equal to ''.
 
-fullNew = max(half,halfVer) * 2
+fullNew = max(n1,n2) * 2
 
 wordListAllNew = [[] for i in range(fullNew)]
-for i in range(half):
+for i in range(n2):
   wordListAllNew[i*2] = wordListAll[i]
-for i in range(halfVer):
-  wordListAllNew[i*2 + 1] = wordListAll[half + i]
+for i in range(n1):
+  wordListAllNew[i*2 + 1] = wordListAll[n2 + i]
 
-limits = [2*half, 2*halfVer]
+limits = [2*n2, 2*n1]
 
 
 
@@ -485,12 +313,13 @@ def loop_recursive(w, n):
 
     if wordListAllNew[n]:
 
-      temp = (n//2)*2   # 0, 0, 2, 2, 4, 4, ...
-      temp2 = (n+1)&1   # 1, 0, 1, 0, 1, 0, ...
-      temp3 = "".join( [w[j][temp] for j in range(temp2, min(n, limits[temp2]), 2)] )
+      nHalf = n >> 1
+      nHalf2 = (n+1) >> 1    # round up
+      temp0 = (n+1)&1   # 1, 0, 1, 0, 1, 0, ...
+      temp = "".join( [w[j][nHalf] for j in range(temp0, min(n, limits[temp0]), 2)] )
 
       for _,word in wordListAllNew[n]:
-        if word[0:n:2] == temp3 :
+        if word[0:nHalf2] == temp :
           loop_recursive(w + [word], n + 1)
 
     else:
@@ -499,12 +328,12 @@ def loop_recursive(w, n):
   else:    # w is now a permutation that contains all (n1 + n2)/2 + 1 words and some ''
 
       # check counts
-      letters = ''.join( [w[i][1::2] if i&1 else w[i] for i in range(fullNew)] )
+      letters = ''.join( [w[i] for i in range(0,fullNew,2)] )
       for i in set(letters):    # is this faster than:  i in letters
         if letters.count(i) != countsAll[i]:
           return
 
-      solution = ''.join(["\n"+" ".join( [w[j][i] for j in range(1,n1p,2)] )+"\n" if i&1 else w[i] for i in range(n2)])  # oof
+      solution = '\n'.join([w[i] for i in range(0,n2d,2)])
 
       print()
       print(solution)

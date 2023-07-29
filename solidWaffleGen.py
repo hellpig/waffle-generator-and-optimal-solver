@@ -46,8 +46,8 @@ if n1 < 2:
   exit()
 
 
-n1p = 2*n1   # useful
-n2p = 2*n2
+n1d = 2*n1   # useful
+n2d = 2*n2
 
 
 # load first word list
@@ -81,14 +81,14 @@ print("  Word list 2 is", len(data2), str(n2) + "-letter words.")
 # recursive function to handle the variable number of for loops (number of loops depends on nl)
 def loop_recursive(w, n, nHalf):
 
-  if n < n2p:
+  if n < n2d:
 
-    if n < n1p:
+    if n < n1d:
       temp1 = "".join([ w[i][nHalf] for i in range(1,n,2) ])
 
     for w1 in data1:   # horizontal word
 
-      if n < n1p:   # if there are still more vertical words to be placed
+      if n < n1d:   # if there are still more vertical words to be placed
 
         if w1[:nHalf] != temp1:
           continue
@@ -100,15 +100,12 @@ def loop_recursive(w, n, nHalf):
         temp2 = "".join([ ww[i][nHalf] for i in range(0,nn,2) ])
 
         for w2 in data2:    # vertical word
-
-          if w2[:nnHalf] != temp2:
-            continue
-
-          loop_recursive(ww + [w2], nn + 1, nnHalf)
+          if w2[:nnHalf] == temp2:
+            loop_recursive(ww + [w2], nn + 1, nnHalf)
 
       else:
 
-        if [ w1[i] for i in range(0,n1) ] != [ w[i][nHalf] for i in range(1,n1p,2) ]:
+        if [ w1[i] for i in range(0,n1) ] != [ w[i][nHalf] for i in range(1,n1d,2) ]:
           continue
 
         loop_recursive(w + [w1, ''], n + 2, nHalf + 1)
@@ -120,7 +117,7 @@ def loop_recursive(w, n, nHalf):
       if n1==n2 and len(w) != len(set(w)):
         return
 
-      waffle = '\n'.join([w[i] for i in range(0,n2p,2)])
+      waffle = '\n'.join([w[i] for i in range(0,n2d,2)])
 
       print()
       print(waffle)

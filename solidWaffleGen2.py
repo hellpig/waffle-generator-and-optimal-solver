@@ -1,22 +1,9 @@
 #!/usr/bin/env python3.11
 #
-# Given a solution, make a rectangular Waffle puzzle.
-# Any odd word size greater than 1 is currently supported!
+# Given a "solid" solution, make a rectangular Waffle puzzle.
+# Any word size greater than 1 is currently supported!
 #
-# Some examples of square puzzles online...
-#   https://wafflegame.net/daily       5×5
-#   https://wafflegame.net/deluxe      7×7
-#   https://wordwaffle.org/unlimited   3×3 can be found here
-# I cannot find any non-square rectangular puzzles online.
-#
-# First, download freq_map.json (5-letter-word frequencies) from
-#   https://github.com/3b1b/videos/tree/master/_2022/wordle/data
-# and/or download words_alpha.txt from
-#   https://github.com/dwyl/english-words
-#
-# words_alpha.txt works for any size words.
-# freq_map.json is better, but only has 5-letter words,
-#   and my code assumes you will use it for 5-letter words
+# First, generate the words#.json files as described in README.md
 #
 # Enter the solution in the first section of the code.
 # To change the waffle-making strategy, edit the final "main code" section.
@@ -32,6 +19,8 @@ from itertools import permutations
 
 from random import shuffle, sample
 
+import json
+
 
 #################################################
 ###### enter the solution
@@ -43,57 +32,11 @@ from random import shuffle, sample
 
 sol = """
 
-mas
-a h
-pah
-
-""".strip().lower()
-
-
-sol = """
-
-whiff
-r n r
-intro
-s e z
-three
-
-""".strip().lower()
-
-
-sol = """
-
-attuned
-g o e e
-explain
-l p r o
-evident
-s n s e
-sighted
-
-""".strip().lower()
-
-
-sol = """
-
-about
-r u a
-total
-i c e
-shown
-t m t
-seems
-
-""".strip().lower()
-
-
-sol = """
-
-artists
-b o h e
-outcome
-u a w m
-talents
+draw
+rare
+idea
+liar
+loss
 
 """.strip().lower()
 
@@ -110,25 +53,25 @@ talents
 n1 = len(sol.split()[0])    # length of horizontal words
 n2 = len(sol.split('\n'))   # length of vertical words
 
-if n1 < 3 or not n1&1 or n2 < 3 or not n2&1:
-  print("  Error: only odd sizes greater than 1!")
+if n1 < 2 or n2 < 2:
+  print("  Error: only sizes greater than 1!")
   exit()
 
 
 # useful
-half = n2//2 + 1         # the number of horizontal words
-halfVer = n1//2 + 1      # the number of vertical words
-full = (n1 + n2)//2 + 1   # the number of words
-n1p = n1+1
+full = n1 + n2    # the number of words
+n1p = n1 + 1
+n1d = 2*n1
+n2d = 2*n2
 
 # useful
-fullNew = max(half,halfVer) * 2
-limits = [2*half, 2*halfVer]
+fullNew = max(n1,n2) * 2
+limits = [2*n2, 2*n1]
 wordListAllNew = [[] for i in range(fullNew)]
 
 # make blank board
-temp = "." * n1 + "\n" + ". " * (n1//2) + ".\n"
-blank = temp * (n2//2) + "." * n1
+temp = "." * n1 + "\n"
+blank = temp * (n2-1) + "." * n1
 
 
 # check for consistency
@@ -136,75 +79,33 @@ if len(sol) != n2*n1p-1:
   print("  Error: sol has an invalid shape!")
   exit()
 for i in range(len(sol)):   # check against structure of blank
-  a =  blank[i] == " " and sol[i] != " "
   b =  blank[i] == "\n" and sol[i] != "\n"
   c =  blank[i] == "." and not sol[i].isalpha()
-  if a or b or c:
+  if b or c:
     print("  Error: invalid input!")
     exit()
 
 
 
-dataLong = False   # do not change
-
-
 
 # load first word list
-isFrequencyMap1 = False
-if n1==5:   # this list is better, but only has 5-letter words
-
-  import json
-  isFrequencyMap1 = True
-  with open('freq_map.json') as f:
-    data1 = json.load(f)
-
-else:
-
-  with open('words_alpha.txt') as f:
-    dataLong = f.read().split()
-
-  data1 = []
-  for word in dataLong:
-    if len(word)==n1:
-      data1.append(word)
-
-
+with open('words' + str(n1) + '.json') as f:
+  data1 = json.load(f)
 
 # load 2nd word list
-
 if n1==n2:
   data2 = data1
-  isFrequencyMap2 = isFrequencyMap1
 else:
-  isFrequencyMap2 = False
-  if n2==5:   # this list is better, but only has 5-letter words
+  with open('words' + str(n2) + '.json') as f:
+    data2 = json.load(f)
 
-    import json
-    isFrequencyMap2 = True
-    with open('freq_map.json') as f:
-      data2 = json.load(f)
-
-  else:
-
-    if not dataLong:
-      with open('words_alpha.txt') as f:
-        dataLong = f.read().split()
-
-    data2 = []
-    for word in dataLong:
-      if len(word)==n2:
-        data2.append(word)
-
-
-
-del dataLong   # try to free up RAM
 
 
 
 
 # make countsAll
 countsAll = {}
-goodLetters = sol.replace(' ', '').replace('\n', '').lower()
+goodLetters = sol.replace('\n', '').lower()
 for i in 'abcdefghijklmnopqrstuvwxyz':
   countsAll[i] = goodLetters.count(i)
 
@@ -215,11 +116,11 @@ wordsAll = []
 
 for wordNum in range(full):
 
-  if wordNum < half:   # horizontal words
-    start = 2 * wordNum * n1p
+  if wordNum < n2:   # horizontal words
+    start = wordNum * n1p
     wordsAll.append( list( sol[ start : start+n1 ] ) )
   else:
-    start = 2 * (wordNum - half)
+    start = wordNum - n2
     wordsAll.append( list( sol[ start :: n1p ] ) )
 
 
@@ -249,12 +150,10 @@ def colorPuzzle(puzzle):
       greenMaskAll[i] = l
 
       # remove greens from wordsLists[]
-      if not (i//n1p)&1:   # if in a horizontal word (when row is even)
-        wordNum = (i//n1p)//2
-        wordsLists[ wordNum ].remove(l)
-      if not i&1:    # if in vertical word (when i is even)
-        wordNum = half + (i%n1p)//2
-        wordsLists[ wordNum ].remove(l)
+      wordNum = i//n1p   # horizontal word
+      wordsLists[ wordNum ].remove(l)
+      wordNum = n2 + i%n1p   # vertical word
+      wordsLists[ wordNum ].remove(l)
 
 
 
@@ -263,22 +162,22 @@ def colorPuzzle(puzzle):
   #   before choosing where any yellows go.
   yellowCandidates = []     # [ [ letter, index, words list, trivial? ], ... ]
   for i,l in enumerate(puzzle):
-    if greenMaskAll[i].isalpha():
+    if greenMaskAll[i].isalpha() or not l.isalpha():
       continue
 
     countMatches = 0
     length = 0    # the max number of places the player might think that the yellow goes to
     words = []
-    if not (i//n1p)&1:   # if in a horizontal word (when row is even)
-      wordNum = (i//n1p)//2
-      length += len(wordsLists[wordNum]) - 1
-      countMatches += wordsLists[wordNum].count(l)
-      words.append(wordNum)
-    if not i&1:    # if in vertical word (when i is even)
-      wordNum = half + (i%n1p)//2
-      length += len(wordsLists[wordNum]) - 1
-      countMatches += wordsLists[wordNum].count(l)
-      words.append(wordNum)
+
+    wordNum = i//n1p   # horizontal word
+    length += len(wordsLists[wordNum]) - 1
+    countMatches += wordsLists[wordNum].count(l)
+    words.append(wordNum)
+
+    wordNum = n2 + i%n1p   # vertical word
+    length += len(wordsLists[wordNum]) - 1
+    countMatches += wordsLists[wordNum].count(l)
+    words.append(wordNum)
 
     if countMatches:
       yellowCandidates.append( (l, i, words, length==1) )
@@ -290,7 +189,6 @@ def colorPuzzle(puzzle):
   trivialPuzzle = False
 
   candidates =  [(a,b,c,d) for a,b,c,d in yellowCandidates if len(c)==2]   # shared locations
-  candidates2 = [(a,b,c,d) for a,b,c,d in yellowCandidates if len(c)==1]   # non-shared locations
 
   indices = []   # marking indices to go back to
   for i,(a,b,c,d) in enumerate(candidates):    # first, do only locations that are inW1 and inW2
@@ -309,16 +207,6 @@ def colorPuzzle(puzzle):
 
     else:
       indices.append(i)
-
-  for a,b,c,d in candidates2:
-    w1 = c[0]  # wordNum
-    if a in wordsLists[w1]:
-
-      lettersAll[b] = lettersAll[b].upper()
-      if d:
-        trivialPuzzle = True
-
-      wordsLists[w1].remove(a)
 
   for i in indices:    # do the skipped locations
     a,b,c,d = candidates[i]
@@ -365,21 +253,19 @@ def count_solutions(greenMaskAll, lettersAll):
     #   then vertical (word on right is last).
     # The numbering system will later be changed.
 
-    # take the correct slice and get correct word list (data), number of letters (nl), and isFrequencyMap
-    if wordNum < half:   # horizontal words
-      start = 2 * wordNum * n1p
+    # take the correct slice and get correct word list (data) and number of letters (nl)
+    if wordNum < n2:   # horizontal words
+      start = wordNum * n1p
       greenMask = greenMaskAll[ start : start+n1 ]
       letters = lettersAll[ start : start+n1 ]
       data = data1
       nl = n1
-      isFrequencyMap = isFrequencyMap1
     else:
-      start = 2 * (wordNum - half)
+      start = wordNum - n2
       greenMask = greenMaskAll[ start :: n1p ]
       letters = lettersAll[ start :: n1p ]
       data = data2
       nl = n2
-      isFrequencyMap = isFrequencyMap2
 
 
     # make counts
@@ -408,7 +294,7 @@ def count_solutions(greenMaskAll, lettersAll):
     ###### make letterList[]
     #######################
 
-    # letterList[] = [ [letter, badLocations, countMin, countMax] , ...]
+    # letterList[] = [ [letter, badLocations, countMax] , ...]
     letterList = []
 
     for i,j in enumerate(letters):   # j is a letter
@@ -421,15 +307,12 @@ def count_solutions(greenMaskAll, lettersAll):
             if letters[k]==j.lower() and letters[k]==greenMask[k]:
               count += 1
 
-          # assume that the other word has not had all of its other letters solved
-          countEven = letters[0::2].count(j)   # yellows that could be part of another word instead
-
           badLocations = [k for k in range(nl) if wordNoGreen.upper()[k] == j]
 
           if j.lower() in wordNoGreen:   # if there is a grey of the letter
-            letterList.append([ j.lower(), badLocations, count - countEven, count ])
+            letterList.append([ j.lower(), badLocations, count ])
           else:
-            letterList.append([ j.lower(), badLocations, count - countEven, counts[j.lower()] ])
+            letterList.append([ j.lower(), badLocations, counts[j.lower()] ])
 
         # is j is a green with no yellows of the same letter
         elif j==greenMask[i] and j.upper() not in letters:
@@ -446,7 +329,7 @@ def count_solutions(greenMaskAll, lettersAll):
               if letters[k]==j and letters[k]==greenMask[k]:
                 count += 1
 
-            letterList.append([ j, [], count, count ])
+            letterList.append([ j, [], count ])
 
 
 
@@ -470,22 +353,17 @@ def count_solutions(greenMaskAll, lettersAll):
       # letterList[]
       go = True
       for entry in letterList:
-        if word.count(entry[0]) < entry[2] or word.count(entry[0]) > entry[3] or entry[0] in [word[i] for i in entry[1]]:
+        if word.count(entry[0]) > entry[2] or entry[0] in [word[i] for i in entry[1]]:
           go = False
           break
 
       if go:
-        if isFrequencyMap:
 
           # do not print words with low frequency (optional)
           #if data[word] <= 1e-7:
           #  continue
 
           wordList.append((data[word], word))
-
-        else:
-          # frequency is unknown, so I put 1
-          wordList.append((1, word))
 
     wordListAll.append(wordList)
 
@@ -502,10 +380,10 @@ def count_solutions(greenMaskAll, lettersAll):
   #   If there are no vertical or horizontal words remaining,
   #   the word is still counted but is equal to ''.
 
-  for i in range(half):
+  for i in range(n2):
     wordListAllNew[i*2] = wordListAll[i]
-  for i in range(halfVer):
-    wordListAllNew[i*2 + 1] = wordListAll[half + i]
+  for i in range(n1):
+    wordListAllNew[i*2 + 1] = wordListAll[n2 + i]
 
 
 
@@ -517,12 +395,13 @@ def count_solutions(greenMaskAll, lettersAll):
 
       if wordListAllNew[n]:
 
-        temp = (n//2)*2   # 0, 0, 2, 2, 4, 4, ...
-        temp2 = (n+1)&1   # 1, 0, 1, 0, 1, 0, ...
-        temp3 = "".join( [w[j][temp] for j in range(temp2, min(n, limits[temp2]), 2)] )
+        nHalf = n >> 1
+        nHalf2 = (n+1) >> 1    # round up
+        temp0 = (n+1)&1   # 1, 0, 1, 0, 1, 0, ...
+        temp = "".join( [w[j][nHalf] for j in range(temp0, min(n, limits[temp0]), 2)] )
 
         for _,word in wordListAllNew[n]:
-          if word[0:n:2] == temp3 :
+          if word[0:nHalf2] == temp :
             loop_recursive(w + [word], n + 1)
 
       else:
@@ -531,7 +410,7 @@ def count_solutions(greenMaskAll, lettersAll):
     else:    # w is now a permutation that contains all (n1 + n2)/2 + 1 words and some ''
 
       # check counts
-      letters = ''.join( [w[i][1::2] if i&1 else w[i] for i in range(fullNew)] )
+      letters = ''.join( [w[i] for i in range(0,fullNew,2)] )
       for i in set(letters):    # is this faster than:  i in letters
         if letters.count(i) != countsAll[i]:
           return
@@ -779,7 +658,7 @@ def strategy1():
 
   puzzle = list(sol)
 
-  temp = list("".join(puzzle).replace(' ', '').replace('\n', ''))
+  temp = list("".join(puzzle).replace('\n', ''))
   shuffle(temp)
 
   # put temp back into puzzle
@@ -815,7 +694,7 @@ def strategy2():
     if greenMask[i].isalpha():
       temp.pop(i)
 
-  temp = list("".join(temp).replace(' ', '').replace('\n', ''))
+  temp = list("".join(temp).replace('\n', ''))
   shuffle(temp)
 
   # put temp back into puzzle
@@ -842,7 +721,7 @@ def strategy3():
   swaps = 0
   while solCount==1 and swaps < swapGoal:
 
-    temp = list("".join(puzzle).replace(' ', '').replace('\n', ''))
+    temp = list("".join(puzzle).replace('\n', ''))
 
     # do a random swap
     i1, i2 = sample(range(len(temp)), 2)

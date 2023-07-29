@@ -164,11 +164,8 @@ def loop_recursive(w, n):
         temp2 = [ ww[i][n] for i in range(0,nn,2) ]
 
         for w2 in data2:    # vertical word
-
-          if [ w2[i] for i in range(0,nn,2) ] != temp2:
-            continue
-
-          loop_recursive(ww + [w2], nn + 1)
+          if [ w2[i] for i in range(0,nn,2) ] == temp2:
+            loop_recursive(ww + [w2], nn + 1)
 
       else:
 

@@ -121,7 +121,7 @@ Next steps...
 
 # "solid" waffles
 
-I define "solid" waffle as those with no "holes". See the files whose names start with *solid*.
+I define "solid" waffle as those with no "holes". See the files whose names start with *solid*. These files are nearly the same as the non-solid files.
 
 For solidWaffleGen.py, the approximate number-of-puzzles formula now becomes...
 $$\frac{num1^{n2} num2^{n1}}{16.33^{n1 n2}}$$
@@ -194,3 +194,5 @@ red
 ```
 
 Ignoring a word length of 2, this leaves 3×3, 3×4, 3×5, and 4×4.
+
+There are no longer non-shared locations in puzzles.

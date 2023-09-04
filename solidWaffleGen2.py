@@ -642,7 +642,7 @@ def get_optimal_swaps(greenMaskAll, lettersAll):
   ######## do everything!
 
   swaps = 0
-  #swaps += swapToTwoGreens()
+  swaps += swapToTwoGreens()
   swaps += swapSafe()
 
   permuteToGetMinSwaps()

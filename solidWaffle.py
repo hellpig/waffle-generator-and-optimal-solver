@@ -598,7 +598,7 @@ def permuteToGetMinSwaps():
 ######## do everything!
 
 swaps = 0
-#swaps += swapToTwoGreens()
+swaps += swapToTwoGreens()
 swaps += swapSafe()
 
 permuteToGetMinSwaps()

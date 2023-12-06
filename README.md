@@ -58,6 +58,8 @@ Let's prove that it is always safe to swap to two new greens. With duplicates, t
 
 Next steps...
 * Other shapes? I believe the whole idea of a waffle is to have maximal shared letters given a word size without having parallel words "touch". A 3-letter word square waffle could be made with two words (it would be a plus sign), but two words do not have maximal shared letters so would be very boring (I suppose a yellow in the center spot would be a curiosity). I suppose that 4-letter words could make 4-word square waffles in various ways, and it would not be hard to modify my code to handle this, but I have never seen these. If I were to do another shape, it might be [this](https://wafflegame.net/royale), though I would think that a 5-letter-word by 7-letter-word rectangle, which my code can already solve, would be more interesting!
+* I wonder if there are more tricks like the swap-to-two-new-greens trick. Note that a swap to two new greens is a cycle of length 2. I wonder if, after checking for any two-cycles, you can safely do any 3-cycles? If this doesn't work, a counter example would be nice.
+* One way to speed up the code is to remove permutations that are the same. For example, if AABBCC is the puzzle with solution BBCCAA, my code would check 8 permutations, but there really is only 1 that is needed. I bet the following would be helpful: [https://stackoverflow.com/a/72969842](https://stackoverflow.com/a/72969842)
 
 
 # waffleGen.py

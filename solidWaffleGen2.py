@@ -525,6 +525,16 @@ def get_optimal_swaps(greenMaskAll, lettersAll):
     for letter in toDelete:
       counts.pop(letter)
 
+    # cleanup a bit
+    for i in range(len(letters_list)-1, -1, -1):
+      if letters_list[i] == solution_list[i]:  # if puzzle equals solution
+        if counts[letters_list[i]] == 1:
+          counts.pop(letters_list[i])
+        else:
+          counts[letters_list[i]] -= 1
+        letters_list.pop(i)
+        solution_list.pop(i)
+
     return swaps
 
 

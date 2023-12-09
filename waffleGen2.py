@@ -25,12 +25,16 @@
 # (c) 2023 Bradley Knockel
 
 
-from itertools import permutations
+from random import shuffle, sample
+
+
+# The following import is only needed if using permuteToGetMinSwaps(),
+#   which is not the default.
 # Note that product(*perms) where perms is a list of permutations could use a lot of RAM,
 #   so I don't import product from itertools
 # Instead, I do the product myself using a recursive function that loops over permutations.
+#from itertools import permutations
 
-from random import shuffle, sample
 
 
 #################################################
@@ -638,10 +642,21 @@ def get_optimal_swaps(greenMaskAll, lettersAll):
     for letter in toDelete:
       counts.pop(letter)
 
+    # cleanup a bit
+    for i in range(len(letters_list)-1, -1, -1):
+      if letters_list[i] == solution_list[i]:  # if puzzle equals solution
+        if counts[letters_list[i]] == 1:
+          counts.pop(letters_list[i])
+        else:
+          counts[letters_list[i]] -= 1
+        letters_list.pop(i)
+        solution_list.pop(i)
+
     return swaps
 
 
 
+  '''
   # If no duplicates, you just mindlessly move things to where they belong and you'll get the optimal number of swaps.
   # Functions for this, minSwapsToSort() and minSwapToMakeArraySame(), are below.
   # The above swapSafe() would also do it.
@@ -747,6 +762,112 @@ def get_optimal_swaps(greenMaskAll, lettersAll):
 
     bestSwaps = 1000000    # any large enough number
     loop_recursive_perms([], 0)
+  '''
+
+
+
+  # Requires letters_list and solution_list
+
+  def findCyclesToGetMinSwaps():
+
+    leng = len(letters_list)
+
+    # the following is explicitly needed because Python's max() doesn't like empty lists
+    if leng==0:
+      return 0
+
+
+    ### find and print all the cycles
+
+    def loop_recursive_cycles(cyc, depth):
+      # "globals": n, leng, cycle[], and cycles[]
+
+      # did you find a cycle that has not yet been found?
+      if cyc[-1][0]==cyc[0][1] and cyc not in cycles:
+        cyclesGood.append(cyc[:])
+        cycles.append(cyc[:])
+        for c in range(depth-1):
+            cyc.append(cyc.pop(0))  # cycle the cycle
+            cycles.append(cyc[:])
+        return
+
+      if depth < leng-n:
+
+        for j in zip(letters_list[n+1:], solution_list[n+1:]):
+
+          if j[1] != cyc[-1][0] or j in cyc:
+            continue
+
+          loop_recursive_cycles(cyc + [j], depth+1)
+    
+    cycles = []      # to not collect repeats
+    cyclesGood = []  # will list all the cycles
+
+    for n,i in enumerate(zip(letters_list[:-1], solution_list[:-1])):
+      loop_recursive_cycles([i],1)
+
+    # sort by length to speed up later code a bit
+    cyclesGood = sorted(cyclesGood, key=len)
+
+    # optionally print cycles
+    #for cyc in cyclesGood:
+    #  print()
+    #  print("".join([i[0] for i in cyc]))
+    #  print("".join([i[1] for i in cyc]))
+
+
+
+    ### go through cycles and fit them together in every possible way
+
+    def loop_recursive_combine_cycles(cycList, currentSituation):
+      # "globals": cycListAll[]
+
+      # did you find a combination that has not yet been found?
+      if len(currentSituation)==0 and cycList not in cycListAll:
+        cycListAll.append(cycList[:])
+        return
+
+      index = cycList[-1] - 1
+      for cyc in cyclesGood[cycList[-1]:]:   # allows repeats of the same cycle
+        index += 1
+
+        # trying to speed things up (only works if cyclesGood is sorted by length)
+        if len(cyc) > len(currentSituation):
+          break
+
+        currentSituationNew = currentSituation[:]
+        try:
+          for j in cyc:
+            currentSituationNew.remove(j)
+        except:
+          continue   # cyc could not be removed
+
+        loop_recursive_combine_cycles(cycList + [index], currentSituationNew)
+
+    cycListAll = []   # to collect combinations of cycles
+
+    for i,cyc in enumerate(cyclesGood):
+
+      # convert to a different data structure
+      currentSituation = list(zip( letters_list, solution_list ))
+
+      # remove cyc
+      for j in cyc:
+        currentSituation.remove(j)
+
+      loop_recursive_combine_cycles([i], currentSituation)
+
+    # optionally print
+    #for l in cycListAll:
+    #  print()
+    #  print(l)
+    #  print("swaps =", leng - len(l) )
+
+
+
+    # each cycle takes its length minus 1 swaps
+    return leng - len(max(cycListAll, key=len))
+
 
 
 
@@ -758,8 +879,9 @@ def get_optimal_swaps(greenMaskAll, lettersAll):
   swaps += swapToTwoGreens()
   swaps += swapSafe()
 
-  permuteToGetMinSwaps()
-  swaps += bestSwaps
+  #permuteToGetMinSwaps()
+  #swaps += bestSwaps
+  swaps += findCyclesToGetMinSwaps()
 
   return swaps
 

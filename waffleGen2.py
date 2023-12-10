@@ -793,9 +793,11 @@ def get_optimal_swaps(greenMaskAll, lettersAll):
 
       if depth < leng-n:
 
+        history = [i[0] for i in cyc]  # remove solution from puzzle
+
         for j in zip(letters_list[n+1:], solution_list[n+1:]):
 
-          if j[1] != cyc[-1][0] or j in cyc:
+          if j[1] != cyc[-1][0] or j[0] in history:
             continue
 
           loop_recursive_cycles(cyc + [j], depth+1)

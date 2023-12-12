@@ -587,7 +587,6 @@ def printSwap(li, lj, i, j):
 
 
 # Does swaps that make 2 new greens. This is optional but can GREATLY speed up the permutation part of the code.
-# I am not sure if this will always allow me to find the optimal solution!
 # Modifies: solution_list, letters_list, counts, and waffleIndices
 def swapToTwoGreens():
 
@@ -596,7 +595,7 @@ def swapToTwoGreens():
   indices = []   # for marking indices that are already solved
   for i in range(len(solution_list)):
     for j in range(i+1, len(solution_list)):
-      if i in indices or j in indices:   # I do not worry about preferentially trying to reduce the letters that have the most duplicates
+      if i in indices or j in indices:
         continue
       if solution_list[j] == letters_list[i] and solution_list[i] == letters_list[j]:
         indices.append(i)
@@ -922,6 +921,10 @@ def findCyclesToGetMinSwaps():
 swaps = 0
 swaps += swapToTwoGreens()
 swaps += swapSafe()
+#swaps += swapToTwoGreens()   # can be helpful to keep alternating between strategies!
+
+#print("".join(letters_list))
+#print("".join(solution_list))
 
 #permuteToGetMinSwaps()
 #swaps += bestSwaps

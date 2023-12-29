@@ -23,6 +23,18 @@ from itertools import permutations
 import json
 
 
+# https://stackoverflow.com/a/5419576
+
+from collections import defaultdict
+
+def list_duplicates(seq):
+    tally = defaultdict(list)
+    for i,item in enumerate(seq):
+        tally[item].append(i)
+    return (locs for key,locs in tally.items() if len(locs)>1)
+
+
+
 #################################################
 ###### enter greenMaskAll and lettersAll for your specific Waffle puzzle
 #################################################
@@ -545,23 +557,53 @@ def permuteToGetMinSwaps():
     return minSwapsToSort(b, n, mp, printBool)
 
 
+  # To speed up the code for many hard puzzles, create get_puz_from_sol[] and ind_of_puz[].
+  # These let you remove duplicate permutations.
+  # If AABBCC is the puzzle with solution BBCCAA, the code would otherwise check 8 permutations,
+  #   but there really is only 1 that is needed, hence the need for ways to check for repeats.
+  #   Note that, since permutations grow factorially, this can really help!
+  # The following will have the same sizes as permStarts[] and p[]...
+  get_puz_from_sol = []
+  ind_of_puz = []   # also, just generally useful for speeding up the code
+
 
   permStarts = []
+  solution_list_old = solution_list[:]
   for letter,count in counts.items():
 
     # I can't make a list of permutations themselves because they are generators
     #   that can only be used once.
-    # I wonder if itertools' cycle(permutations()) would be faster??
-    permStarts.append( [ letter+str(i) for i in range(count) ] )
+    #   I wonder if itertools' cycle(permutations()) would be faster??
+    permStarts.append( tuple([ letter+str(i) for i in range(count) ]) )
 
-    # modify solution_list
+    # Modify solution_list and append to get_puz_from_sol
     ind = 0
+    temp = ''  # to be appended to get_puz_from_sol
     for i in range(count):
       for j in range(ind, len(solution_list)):
         if solution_list[j]==letter:
           ind = j
           break
-      solution_list[ind] = letter + str(i)
+      temp += letters_list[ind]
+      solution_list[ind] = letter + str(i)   # now duplicate letters are numbered
+    get_puz_from_sol.append(temp)
+
+
+    # append to ind_of_puz[]
+    temp = []
+    ind = -1
+    for i in range(count):
+
+      # find the index, ind
+      for j in range(ind+1, len(letters_list)):
+        if letters_list[j]==letter:
+          ind = j
+          break
+
+      temp.append(ind)
+
+    ind_of_puz.append(tuple(temp))
+
 
 
   # Recursive function to handle the variable length of perms to loop through
@@ -570,6 +612,27 @@ def permuteToGetMinSwaps():
 
     if n < len(permStarts):
       for perm in permutations(permStarts[n]):
+
+        # to speed things up, prune this branch if there are duplicate permutations
+        pairs = []
+        for i,l in enumerate(perm):   # create pairs[]
+          ind = int(l[1])
+          pairs.append(get_puz_from_sol[n][ind] + solution_list_old[ind_of_puz[n][i]])
+        stop = False
+        for dup in list_duplicates(pairs):
+          # insist that duplicate permutations be in increasing order; else stop
+          v = int(perm[dup[0]][1])
+          for k in dup[1:]:
+            vNew = int(perm[k][1])
+            if v > vNew:
+              stop = True
+              break
+            v = vNew
+          if stop:   # does this speed things up?
+            break
+        if stop:
+          continue
+
         loop_recursive_perms(p + [perm], n + 1)
 
     else:    # p is now a list of specific permutations

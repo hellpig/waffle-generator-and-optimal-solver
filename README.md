@@ -139,6 +139,12 @@ Next steps...
   THEvE      THE*E
 ```
 
+
+# wafflePlayer.html
+
+This is a JavaScript player to play the waffle puzzles you just made! See the comments at the top of the file.
+
+
 # "solid" waffles
 
 I define "solid" waffle as those with no "holes". See the 3 files whose names start with *solid*. These files are nearly the same as the non-solid files. They use the words#.json file lists described above, though now word lengths can be even numbers.

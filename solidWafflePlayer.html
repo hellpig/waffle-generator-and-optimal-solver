@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noarchive">
+<meta http-equiv="cache-control" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<!--
+Colors chosen to match...
+  https://wafflegame.net/daily
+
+Screen will turn orange when solved.
+
+This file needs to have the same yellow-coloring algorithm as the puzzle generator.
+This file...
+ - first tries to color locations that remove a letter from two words
+ - "reading" order is preferred: top-over-bottom then left-over-right
+
+Not yet implemented...
+ - swapping in a way that works on touchscreens
+ - detecting all invalid inputs for puzzle and solution
+
+Just insert your puzzle and solution in the first <script> block just below!
+Spaces between letters have meaning.
+-->
+
+
+<script>
+
+    //////////////////////////////////////////////////
+    ////  insert your puzzle and solution here!!  ////
+    //////////////////////////////////////////////////
+
+const puzzle = `
+
+RasrI
+ADERI
+lAwdR
+olSAE
+
+`.trim().toUpperCase();
+
+const solution = `
+
+drill
+radio
+areas
+wears
+
+`.trim().toUpperCase();
+
+</script>
+
+
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #fff none;
+    white-space: nowrap;
+}
+
+.off, .green, .yellow, .white {
+    /* box-shadow size does not push surrounding objects */
+    /* padding-top adds to the height */
+    width: 50px;
+    border-radius: 8px;
+    font-size: 30px;
+    /* We have a system of 2 equations...
+         height + box-shadow + padding-top = width
+         2 padding-top + font-size = height + padding-top
+       which solves to give...
+         height = (font-size + width - box-shadow) / 2
+         padding-top = (width - box-shadow - font-size) / 2
+    */
+    height: 38px;
+    padding-top: 8px;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-top: 4px;  /* top + bottom = left + right + box-shadow */
+    margin-bottom: 4px;
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    font-weight: bold;
+    user-select: none;
+}
+
+.off {
+    /* transparent */
+    background-color: rgba(0, 0, 0, 0);
+    box-shadow: 0px 4px rgba(0, 0, 0, 0);
+}
+
+.green {
+    background-color: #6fb05c;
+    box-shadow: 0px 4px #649e53;
+    color: #fff;
+}
+
+.yellow {
+    cursor: pointer;
+    background-color: #e9ba3a;
+    box-shadow: 0px 4px #d1a734;
+    color: #fff;
+}
+
+.white {
+    cursor: pointer;
+    background-color: #edeff1;
+    box-shadow: 0px 4px #d5d7d8;
+    color: #1a1a1b;
+}
+
+</style>
+
+
+<title>Waffle Puzzle</title>
+
+</head>
+
+
+
+
+
+<body id="bod">
+
+<div id="gameBoard"></div>
+
+<p>Swaps = <span id="swaps">0</span></p>
+
+<script>
+
+
+
+let playing = true;
+let swaps = 0;
+
+// get number of letters per word
+const n1 = solution.split('\n')[0].length  // length of horizontal words (number of columns)
+const n2 = solution.split('\n').length     // length of vertical words (number of rows)
+
+// get more convenient forms: arrays
+const sol = solution.replaceAll('\r','').replaceAll('\n','').split('');
+let puz = puzzle.replaceAll('\r','').replaceAll('\n','').split('');
+
+const gameBoard = document.getElementById("gameBoard");
+
+// basic check for correct format
+const size = n1 * n2;
+if (sol.length != puz.length || sol.length != size || sol == puz) {
+    playing = false;
+    document.getElementById("bod").style.background = "#ff0000 none";
+    alert("error: invalid puzzle or solution");
+}
+
+
+
+// make a list of words, where each word is a list of letters
+const wordsAll = [];
+
+for (let wordNum = 0; wordNum < n1+n2; wordNum++) {
+
+    if (wordNum < n2) {     // horizontal words
+        const start = wordNum * n1;
+        wordsAll.push( sol.slice(start, start+n1) );
+    } else {
+        const start = wordNum - n2;
+        const temp = [];
+        for (let i=0; i<n2; i++) {
+            temp.push(sol[start + i*n1]);
+        }
+        wordsAll.push( temp );
+    }
+}
+
+// this remove() function should ideally already exist in JavaScript
+function remove_letter_from_array(array, letter) {
+    const ind = array.indexOf(letter);
+    array[ind] = array[array.length - 1];
+    array.pop();
+}
+
+// used to remove green letters
+function remove_from_wordsAll(ind) {
+    const row = Math.floor(ind/n1);
+    const col = ind%n1;
+    const letter = sol[ind];
+
+    remove_letter_from_array(wordsAll[ row ], letter);
+    remove_letter_from_array(wordsAll[ n2 + col ], letter);
+}
+
+
+
+/*
+  Using the following words is more readable than using the integer literals.
+  The actual integer values are arbitrary as long as they are unique and Uint8.
+*/
+const off    = 1;
+const green  = 2;
+const yellow = 3;
+const white  = 4;
+
+// Initialize board[col + n1*row], the main state variable
+const board = new Uint32Array(size);    // Uint8Array would work too
+let progress = 0;    // game is over when this equals size
+for (let i = 0; i < size; i++) {
+    if ( puz[i] == " " ) {
+        progress++;
+        board[i] = off;
+    } else if (puz[i] == sol[i]) {
+        progress++;
+        board[i] = green;
+        remove_from_wordsAll(i);
+    } else {
+        board[i] = white;  // yellows not yet found; white for now
+    }
+}
+
+
+function make_green_maybe(cell, ind) {
+    if ( sol[ind] == puz[ind] ) {
+        progress++;
+        board[ind] = green;
+        remove_from_wordsAll(ind);
+
+        cell.className = "green";
+
+        cell.draggable = false;
+        cell.ondragstart = null;
+        cell.ondragover = null;
+        cell.ondrop = null;
+    }
+}
+
+
+
+function make_yellow(ind) {
+    if (board[ind] != yellow) {
+        board[ind] = yellow;
+        document.getElementById("i" + ind.toString()).className = "yellow";
+    }
+}
+
+function make_white(ind) {
+    if (board[ind] != white) {
+        board[ind] = white;
+        document.getElementById("i" + ind.toString()).className = "white";
+    }
+}
+
+function place_yellows() {
+
+    // the non-green letters of each word not yet represented by a yellow
+    const wordsLists = [];
+    for (let i=0; i < wordsAll.length; i++) {  // deep copy to keep wordsAll unchanged
+        wordsLists.push( Array.from(wordsAll[i]) );
+    }
+
+    /*
+      find yellow candidates:  [ [ letter, index, words list ], ... ]
+    */
+    const yellowCandidates = [];
+    for (let i=0; i<size; i++) {
+
+        if (board[i]==off || board[i]==green) {
+            continue;
+        }
+
+        const letter = puz[i];
+        const row = Math.floor(i/n1);
+        const col = i%n1;
+
+        let match = false;
+        const words = [];
+
+        if ( wordsLists[row].includes(letter) ) {
+            match = true;
+        }
+        words.push(row);
+
+        if ( wordsLists[n2 + col].includes(letter) ) {
+            match = true;
+        }
+        words.push(n2 + col);
+
+        if (match) {
+            yellowCandidates.push( [letter, i, words] );
+        } else {
+            make_white(i);
+        }
+    }
+
+    const indices = [];   // marking indices to go back to
+    for (let i=0; i < yellowCandidates.length; i++) {   // first, do only locations that are inW1 and inW2
+        const a = yellowCandidates[i][0];  // letter
+        const b = yellowCandidates[i][1];  // index
+        const c = yellowCandidates[i][2];  // words
+
+        const w1 = c[0];  // wordNum1
+        const w2 = c[1];  // wordNum2
+        const inW1 = wordsLists[w1].includes(a);
+        const inW2 = wordsLists[w2].includes(a);
+        if (inW1 && inW2) {   // make yellow
+            make_yellow(b);
+            remove_letter_from_array(wordsLists[w1], a);
+            remove_letter_from_array(wordsLists[w2], a);
+        } else {
+            indices.push(i);
+        }
+    }
+
+    for (let i=0; i < indices.length; i++) {    // do the skipped locations
+        const ind = indices[i];
+
+        const a = yellowCandidates[ind][0];  // letter
+        const b = yellowCandidates[ind][1];  // index
+        const c = yellowCandidates[ind][2];  // words
+
+        const w1 = c[0];  // wordNum1
+        const w2 = c[1];  // wordNum2
+        const inW1 = wordsLists[w1].includes(a);
+        const inW2 = wordsLists[w2].includes(a);
+        if (inW1 || inW2) {
+
+            make_yellow(b);
+
+            if (inW1) {
+                remove_letter_from_array(wordsLists[w1], a);
+            }
+            if (inW2) {
+                remove_letter_from_array(wordsLists[w2], a);
+            }
+        } else {
+            make_white(b);
+        }
+    }
+
+}
+
+
+
+function drag(ev) {
+    ev.dataTransfer.setData("id", ev.target.id);
+}
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drop(ev) {
+    ev.preventDefault();  // necessary?
+
+    if ( !playing ) {
+        return;
+    }
+
+    const id_old = ev.dataTransfer.getData("id");
+    const id_new = ev.target.id;
+
+    const cell_old = document.getElementById(id_old);
+    const cell_new = document.getElementById(id_new);
+
+    // letter to be swapped
+    const data_old = cell_old.textContent;
+    const data_new = cell_new.textContent;
+
+    if ( data_old == data_new ) {
+        return;
+    }
+
+    const ind_old = Number(id_old.slice(1));
+    const ind_new = Number(id_new.slice(1));
+
+    // swap letter
+    cell_new.textContent = data_old;
+    cell_old.textContent = data_new;
+    const temp = puz[ind_old];
+    puz[ind_old] = puz[ind_new];
+    puz[ind_new] = temp;
+
+    // increase swap count
+    swaps++;
+    document.getElementById("swaps").textContent = swaps.toString();
+
+    // make things green if they should be made green
+    make_green_maybe(cell_old, ind_old);
+    make_green_maybe(cell_new, ind_new);
+
+    // check if solved
+    if ( progress == size ) {
+        playing = false;
+        document.getElementById("bod").style.background = "#fcba03 none";
+        //alert("☺ solved! ☺");
+        return;
+    }
+
+    place_yellows();
+}
+
+
+
+// render initial board
+for (let ind = 0; ind < size; ind++) {
+
+    const cell = document.createElement("div");
+    cell.setAttribute("id", "i"+ind);
+    if ( board[ind] == off ) {
+        cell.className = "off";
+    } else if ( board[ind] == green ) {
+        cell.className = "green";
+        cell.textContent = puz[ind];
+    } else {     // yellows not determined yet; white for now
+        cell.className = "white";
+        cell.textContent = puz[ind];
+
+        cell.draggable = true;
+        cell.ondragstart = drag;
+        cell.ondragover = allowDrop;
+        cell.ondrop = drop;
+    }
+    gameBoard.appendChild(cell);
+
+    if (ind % n1 == n1-1) {
+        gameBoard.appendChild( document.createElement("br") );
+    }
+}
+
+if (playing) {
+    place_yellows();
+}
+
+</script>
+
+</body>
+</html>

@@ -11,18 +11,17 @@
 Colors chosen to match...
   https://wafflegame.net/daily
 
-Screen will turn orange when solved.
-
-This file needs to have the same yellow-coloring algorithm as the puzzle generator.
-This file...
+This file needs to have the same yellow-coloring algorithm as the puzzle generator,
+  else the puzzle may have a different number of initial solutions
+  or a different number of trivial initial moves.
+This file (specifically the place_yellows function)...
  - first tries to color shared locations that remove a letter from two words before non-shared locations
  - then color the non-shared locations before doing the rest of the shared locations
      (this would be very easy to change)
- - "reading" order is preferred: top-over-bottom then left-over-right
+ - "reading" order is preferred: top is preferred over bottom,
+      or, if the same height, left is preferred over right
 
-Not yet implemented...
- - swapping in a way that works on touchscreens
- - detecting all invalid inputs for puzzle and solution
+Swapping in a way that works on touchscreens is not yet implemented.
 
 Just insert your puzzle and solution in the first <script> block just below!
 Spaces between letters have meaning.
@@ -44,6 +43,7 @@ A L i s
 UmAhTNs
 
 `.trim().toUpperCase();
+
 
 const solution = `
 
@@ -147,20 +147,83 @@ let swaps = 0;
 // get number of letters per word
 const n1 = solution.split('\n')[0].length  // length of horizontal words (number of columns)
 const n2 = solution.split('\n').length     // length of vertical words (number of rows)
+const size = n1 * n2;
 
-// get more convenient forms: arrays
-const sol = solution.replaceAll('\r','').replaceAll('\n','').split('');
-let puz = puzzle.replaceAll('\r','').replaceAll('\n','').split('');
+// get more convenient forms: arrays without newlines
+const sol = solution.replaceAll('\n','').split('');
+let puz = puzzle.replaceAll('\n','').split('');
 
 const gameBoard = document.getElementById("gameBoard");
 
-// basic check for correct format
-const size = n1 * n2;
-if (sol.length != puz.length || sol.length != size || sol == puz) {
-    playing = false;
-    document.getElementById("bod").style.background = "#ff0000 none";
-    alert("error: invalid puzzle or solution");
+
+
+// check for correct format
+function check_input_validity() {
+
+    function stop_playing(msg) {
+        playing = false;
+        document.getElementById("bod").style.background = "#ff0000 none";
+        alert("error: " + msg);
+    }
+    
+    // For testing if a character is a capital letter.
+    // Could easily be generalized if special letters are desired.
+    function isAlpha(ch) {
+        return (ch >= "A" && ch <= "Z");
+    }
+
+    if (sol.length != size || puz.length != size) {
+        stop_playing("invalid puzzle or solution size");
+        return;
+    }
+
+    // check shape
+    const n1p = n1 + 1;   // counts the newline as a column
+    for (let row=0; row<n2; row++) {
+        for (let col=0; col < n1p; col++) {
+            if ( col == n1 && row == n2-1 ) {
+                break;  // done; any final newline was trimmed
+            }
+            if ( col == n1 ) {
+                if ( puzzle[col + n1p*row] != '\n' || solution[col + n1p*row] != '\n' ) {
+                    stop_playing("invalid puzzle or solution shape");
+                    return;
+                }
+            } else if ( (row&1) && (col&1) ) {
+                if ( puzzle[col + n1p*row] != ' ' || solution[col + n1p*row] != ' ' ) {
+                    stop_playing("invalid puzzle or solution shape");
+                    return;
+                }
+            } else {
+                if ( !isAlpha( puzzle[col + n1p*row] ) || !isAlpha( solution[col + n1p*row] ) ) {
+                    stop_playing("invalid puzzle or solution shape");
+                    return;
+                }
+            }
+        }
+    }
+
+    if (sol == puz) {
+        stop_playing("puzzle is already solved!?");
+        return;
+    }
+
+    // letter counts should be equal
+    const puzCount = new Map();
+    puz.forEach( e => {
+        puzCount.set(e, (puzCount.get(e) ?? 0) + 1);
+    });
+    const solCount = new Map();
+    sol.forEach( e => {
+        solCount.set(e, (solCount.get(e) ?? 0) + 1);
+    });
+    if ( puzCount.size != solCount.size || !Array.from(puzCount.keys()).every( (key) => puzCount.get(key) == solCount.get(key) ) ) {
+        stop_playing("letter counts do not match");
+        return;
+    }
 }
+
+check_input_validity();
 
 
 
@@ -389,7 +452,7 @@ function allowDrop(ev) {
 }
 
 function drop(ev) {
-    ev.preventDefault();  // necessary?
+    ev.preventDefault();
 
     if ( !playing ) {
         return;
@@ -450,8 +513,8 @@ for (let ind = 0; ind < size; ind++) {
     } else if ( board[ind] == green ) {
         cell.className = "green";
         cell.textContent = puz[ind];
-    } else {     // yellows not determined yet; white for now
-        cell.className = "white";
+    } else {
+        cell.className = "white";  // yellows not determined yet; white for now
         cell.textContent = puz[ind];
 
         cell.draggable = true;

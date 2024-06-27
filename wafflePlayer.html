@@ -89,6 +89,9 @@ body {
     margin-bottom: 2px;
     display: inline-block;
     vertical-align: middle;
+
+    /* should match border-radius below for when container's box-shadow is set */
+    border-radius: 8px;
 }
 
 .green, .yellow, .white {
@@ -507,6 +510,8 @@ function pickup(event) {
 
     moving.style.position = 'fixed';
     moving.style.zIndex = '10';  // move to front
+    moving.style.transform = 'scale(1.2)';
+    moving.parentElement.style.boxShadow = '0px 0px 0px 2px LightGrey inset';
     move(event);  // center it immediately
 }
 
@@ -553,6 +558,8 @@ function drop(event) {
         moving.style.top = '';
         moving.style.position = '';
         moving.style.zIndex = '';
+        moving.style.transform = '';
+        moving.parentElement.style.boxShadow = '';
 
         moving = null;
     }

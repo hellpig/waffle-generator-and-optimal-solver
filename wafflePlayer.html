@@ -21,7 +21,9 @@ This file (specifically the place_yellows function)...
  - "reading" order is preferred: top is preferred over bottom,
       or, if the same height, left is preferred over right
 
-Swapping in a way that works on touchscreens is not yet implemented.
+To swap, drag one cell to another. I was inspired by...
+  https://www.horuskol.net/blog/2020-08-15/drag-and-drop-elements-on-touch-devices/
+They had some bugs in their code, but I fixed them.
 
 Just insert your puzzle and solution in the first <script> block just below!
 Spaces between letters have meaning.
@@ -68,10 +70,30 @@ body {
     white-space: nowrap;
 }
 
-.off, .green, .yellow, .white {
-    /* box-shadow size does not push surrounding objects */
-    /* padding-top adds to the height */
+#gameBoard {
+    /*
+      Limit size so that the screen can be more easily scrolled on touchscreen.
+      If you don't care about touchscreens and want smoother dragging
+        outside of gameBoard's area, attach all the events to the
+        html tag instead of the gameBoard's tag.
+    */
+    display: inline-block;
+}
+
+.container {
+    height: 50px;
     width: 50px;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.green, .yellow, .white {
+    /* padding-top adds to the height */
+    width: 50px;   /* equal to height and width of container */
     border-radius: 8px;
     font-size: 30px;
     /* We have a system of 2 equations...
@@ -83,21 +105,9 @@ body {
     */
     height: 38px;
     padding-top: 8px;
-    margin-right: 2px;
-    margin-left: 2px;
-    margin-top: 4px;  /* top + bottom = left + right + box-shadow */
-    margin-bottom: 4px;
-    display: inline-block;
     text-align: center;
-    vertical-align: middle;
     font-weight: bold;
     user-select: none;
-}
-
-.off {
-    /* transparent */
-    background-color: rgba(0, 0, 0, 0);
-    box-shadow: 0px 4px rgba(0, 0, 0, 0);
 }
 
 .green {
@@ -133,7 +143,7 @@ body {
 
 <body id="bod">
 
-<div id="gameBoard"></div>
+<div id="gameBoard" onmousemove="move(event)" ontouchmove="move(event)" onmouseup="drop(event)" ontouchend="drop(event)"></div>
 
 <p>Swaps = <span id="swaps">0</span></p>
 
@@ -261,6 +271,7 @@ function remove_from_wordsAll(ind) {
     const row = Math.floor(ind/n1);
     const col = ind%n1;
     const letter = sol[ind];
+
     if ( !(row&1) ) {   // if in a horizontal word (when row is even)
         const wordNum = row/2;
         remove_letter_from_array(wordsAll[ wordNum ], letter);
@@ -307,10 +318,12 @@ function make_green_maybe(cell, ind) {
 
         cell.className = "green";
 
-        cell.draggable = false;
-        cell.ondragstart = null;
-        cell.ondragover = null;
-        cell.ondrop = null;
+        const cell_container = cell.parentElement;
+
+        cell_container.onmouseup = null;
+        cell_container.ontouchend = null;
+        cell.onmousedown = null;
+        cell.ontouchstart = null;
     }
 }
 
@@ -443,28 +456,9 @@ function place_yellows() {
 
 
 
-function drag(ev) {
-    ev.dataTransfer.setData("id", ev.target.id);
-}
+function swap(cell_old, cell_new) {
 
-function allowDrop(ev) {
-    ev.preventDefault();
-}
-
-function drop(ev) {
-    ev.preventDefault();
-
-    if ( !playing ) {
-        return;
-    }
-
-    const id_old = ev.dataTransfer.getData("id");
-    const id_new = ev.target.id;
-
-    const cell_old = document.getElementById(id_old);
-    const cell_new = document.getElementById(id_new);
-
-    // letter to be swapped
+    // letters to be swapped
     const data_old = cell_old.textContent;
     const data_new = cell_new.textContent;
 
@@ -472,8 +466,8 @@ function drop(ev) {
         return;
     }
 
-    const ind_old = Number(id_old.slice(1));
-    const ind_new = Number(id_new.slice(1));
+    const ind_old = Number(cell_old.id.slice(1));
+    const ind_new = Number(cell_new.id.slice(1));
 
     // swap letter
     cell_new.textContent = data_old;
@@ -499,6 +493,69 @@ function drop(ev) {
     }
 
     place_yellows();
+
+}
+
+
+
+let moving = null;
+
+function pickup(event) {
+    event.preventDefault();
+
+    moving = event.target;
+
+    moving.style.position = 'fixed';
+    moving.style.zIndex = '10';  // move to front
+    move(event);  // center it immediately
+}
+
+function move(event) {
+    event.preventDefault();
+
+    if (moving) {
+        if (event.clientX) {     // mousemove
+            moving.style.left = event.clientX - moving.clientWidth/2 + 'px';
+            moving.style.top = event.clientY - moving.clientHeight/2 + 'px';
+        } else {            // touchmove - assuming a single touchpoint
+            moving.style.left = event.changedTouches[0].clientX - moving.clientWidth/2 + 'px';
+            moving.style.top = event.changedTouches[0].clientY - moving.clientHeight/2 + 'px';
+        }
+    }
+}
+
+function drop(event) {
+    event.preventDefault();
+
+    if (moving) {
+
+        // get target
+        moving.style.zIndex = '-10';  // move to back
+        let target = null;
+        if (event.clientX) {
+            target = document.elementFromPoint(event.clientX, event.clientY);
+        } else {
+            target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
+        }
+/*
+        if (target.childElementCount) {  // to handle placing back on itself
+            target = target.firstElementChild;
+        }
+*/
+
+        //console.log(target.id);
+        if ( playing && (target.className == 'white' || target.className == 'yellow') ) {  // not 'container' or anything else
+            swap( moving, target );
+        }
+
+        // reset our element
+        moving.style.left = '';
+        moving.style.top = '';
+        moving.style.position = '';
+        moving.style.zIndex = '';
+
+        moving = null;
+    }
 }
 
 
@@ -506,23 +563,32 @@ function drop(ev) {
 // render initial board
 for (let ind = 0; ind < size; ind++) {
 
-    const cell = document.createElement("div");
-    cell.setAttribute("id", "i"+ind);
-    if ( board[ind] == off ) {
-        cell.className = "off";
-    } else if ( board[ind] == green ) {
+    const cell_container = document.createElement("div");  // a container is needed else moving makes board "readjust"
+    cell_container.className = "container";
+    let cell = null;  // movable
+
+    if ( board[ind] == off ) {}
+    else if ( board[ind] == green ) {
+        cell = document.createElement("div");
+        cell.setAttribute("id", "i"+ind);
         cell.className = "green";
         cell.textContent = puz[ind];
     } else {
+        cell = document.createElement("div");
+        cell.setAttribute("id", "i"+ind);
         cell.className = "white";  // yellows not determined yet; white for now
         cell.textContent = puz[ind];
 
-        cell.draggable = true;
-        cell.ondragstart = drag;
-        cell.ondragover = allowDrop;
-        cell.ondrop = drop;
+        cell_container.onmouseup = drop;  // note that the html tag also has a drop event
+        cell_container.ontouchend = drop;
+        cell.onmousedown = pickup;
+        cell.ontouchstart = pickup;
     }
-    gameBoard.appendChild(cell);
+
+    gameBoard.appendChild(cell_container);
+    if (cell) {
+        cell_container.appendChild(cell);
+    }
 
     if (ind % n1 == n1-1) {
         gameBoard.appendChild( document.createElement("br") );

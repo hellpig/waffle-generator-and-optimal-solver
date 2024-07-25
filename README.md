@@ -1,6 +1,8 @@
 # waffle-generator-and-optimal-solver
 Waffle puzzles are basically 2D Wordle puzzles for which you must swap letters. I find optimal (fewest swap) solutions to waffles of various rectangular sizes! I can also generate waffles!
 
+![sample image](screenshot.png)
+
 All the rectangular ones that I can find online are square. The puzzles...  
 [https://wafflegame.net/daily](https://wafflegame.net/daily) is 5×5  
 [https://wafflegame.net/deluxe](https://wafflegame.net/deluxe) is 7×7  

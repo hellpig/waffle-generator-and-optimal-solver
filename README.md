@@ -42,6 +42,8 @@ for j in range(len(lengths)):
 ```
 I believe you need at least Python 3.7 to run the above code since isascii() was introduced in 3.7. I was using 3.11. I haven't changed my 3 *waffle* files to use these word lists yet, but feel free to use the resulting .json files for even 5-letter words! Note that I exclusively use the above word lists in my 3 *solidWaffle* files, so you can reference these files to see how to load in word-list files.
 
+However, I am now convinced that word frequency is a poor metric for whether a word should be included in the word list. Good lists should be hand-curated by several people who throw out words that are generally unknown. I have never attempted to hand-curate a list.
+
 
 
 # waffle.py is the optimal solver
@@ -151,6 +153,8 @@ This is a JavaScript player to play the waffle puzzles you just made! See the co
 
 I define "solid" waffle as those with no "holes". See the 3 files whose names start with *solid*. These files are nearly the same as the non-solid files. They use the words#.json file lists described above, though now word lengths can be even numbers.
 
+There are no longer non-shared locations in puzzles.
+
 For solidWaffleGen.py, the approximate number-of-puzzles formula now becomes...
 $$\frac{num1^{n2} num2^{n1}}{16.33^{n1 · n2}}$$
 
@@ -179,7 +183,7 @@ print(sum / count**2)  # chance that a random letter matches another random lett
 ```
 I learn that, given my frequency cutoffs, 3-letter and 4-letter words have a more uniform distribution of letter frequencies (the chance of a random letter matching another random letter is less than 0.06), but 5-letter, 6-letter, and 7-letter words have certain letters be quite common.
 
-For 4×5, the following are most of the few good puzzles...
+Using my frequency cutoffs, for 4×5, the following are most of the few good puzzles...
 ```
 draw
 rare
@@ -246,4 +250,5 @@ red
 
 Ignoring a word length of 2, this leaves 3×3, 3×4, 3×5, and 4×4.
 
-There are no longer non-shared locations in puzzles.
+I came across a great 5×5 crossword-puzzle solution with generally-known 5-letter words that would not be generated using my frequency cutoffs. When I tried to get my code to replicate it, I had to reduce the frequency cutoff to very low to include the least frequent word: *fazes*. With this cutoff, nearly all returned solutions had garbage words, and the progress through the entire search space was essentially a rate of 0. A hand-curated list of words would be necessary to generate all interesting puzzles of a certain size.
+

@@ -42,7 +42,7 @@ for j in range(len(lengths)):
 ```
 I believe you need at least Python 3.7 to run the above code since isascii() was introduced in 3.7. I was using 3.11. I haven't changed my 3 *waffle* files to use these word lists yet, but feel free to use the resulting .json files for even 5-letter words! Note that I exclusively use the above word lists in my 3 *solidWaffle* files, so you can reference these files to see how to load in word-list files.
 
-However, I am now convinced that word frequency is a poor metric for whether a word should be included in the word list. Good lists should be hand-curated by several people who throw out words that are generally unknown. I have never attempted to hand-curate a list.
+However, I am now convinced that word frequency is a poor metric for whether a word should be included in the word list. Good lists should be hand-curated by several people who throw out words that are generally unknown. Perhaps waffleGen.py can use smaller word lists than the solvers used in waffleGen2.py and waffle.py. I have never attempted to hand-curate a list.
 
 
 

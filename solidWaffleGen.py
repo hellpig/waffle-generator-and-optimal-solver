@@ -13,8 +13,7 @@
 #
 # I remove waffles with repeated words.
 #
-# For square waffles...
-#  - I prevent symmetrically identical puzzles.
+# For square waffles, I prevent the obvious transpose duplicate.
 #
 # For non-square Waffles, I put the longer words vertical.
 # If desired, transposing rows and columns is a trivial next step.
@@ -86,6 +85,9 @@ if n1 == n2:
   index2 = index1
 else:
   index2 = make_index(data2, n2)
+
+#print(index1)
+#exit()
 
 
 

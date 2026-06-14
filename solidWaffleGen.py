@@ -11,9 +11,10 @@
 # I cannot find any non-square rectangular puzzles online.
 # I cannot find any "solid" puzzles online.
 #
+# I remove waffles with repeated words.
+#
 # For square waffles...
 #  - I prevent symmetrically identical puzzles.
-#  - I remove waffles with repeated words.
 #
 # For non-square Waffles, I put the longer words vertical.
 # If desired, transposing rows and columns is a trivial next step.
@@ -60,10 +61,32 @@ if n1==n2:
 else:
   with open('words' + str(n2) + '.json') as f:
     data2 = json.load(f)
-  
+
 
 print("\n  Word list 1 is", len(data1), str(n1) + "-letter words.")
 print("  Word list 2 is", len(data2), str(n2) + "-letter words.")
+
+
+
+# for massive speedup, precompute some dictionaries
+
+def make_index(data, max_len):
+  index = {}
+
+  for word in data:
+    for k in range(1, max_len + 1):
+      key = word[:k]
+      index.setdefault(key, []).append(word)
+
+  return index
+
+index1 = make_index(data1, n1)
+
+if n1 == n2:
+  index2 = index1
+else:
+  index2 = make_index(data2, n2)
+
 
 
 #################################################
@@ -84,45 +107,42 @@ def loop_recursive(w, n, nHalf):
   if n < n2d:
 
     if n < n1d:
-      temp1 = "".join([ w[i][nHalf] for i in range(1,n,2) ])
+      temp1 = "".join(w[i][nHalf] for i in range(1, n, 2))
+    else:
+      temp1 = "".join(w[i][nHalf] for i in range(1, n1d, 2))
 
-    for w1 in data1:   # horizontal word
+    for w1 in index1.get(temp1, []):   # horizontal word
 
       if n < n1d:   # if there are still more vertical words to be placed
-
-        if w1[:nHalf] != temp1:
-          continue
 
         nn = n + 1
         nnHalf = nHalf + 1
         ww = w + [w1]
 
-        temp2 = "".join([ ww[i][nHalf] for i in range(0,nn,2) ])
+        temp2 = "".join(ww[i][nHalf] for i in range(0, nn, 2))
 
-        for w2 in data2:    # vertical word
-          if w2[:nnHalf] == temp2:
-            loop_recursive(ww + [w2], nn + 1, nnHalf)
+        for w2 in index2.get(temp2, []):    # vertical word
+          loop_recursive(ww + [w2], nn + 1, nnHalf)
 
       else:
-
-        if [ w1[i] for i in range(0,n1) ] != [ w[i][nHalf] for i in range(1,n1d,2) ]:
-          continue
 
         loop_recursive(w + [w1, ''], n + 2, nHalf + 1)
 
 
   else:     # w now contains all the words in the waffle
 
-      # check for repeated words in square waffle
-      if n1==n2 and len(w) != len(set(w)):
+      # check for repeated words
+      realWords = [word for word in w if word]   # removes any placeholder empty strings ''
+      if len(realWords) != len(set(realWords)):
         return
 
-      waffle = '\n'.join([w[i] for i in range(0,n2d,2)])
+      waffle = '\n'.join([w[i] for i in range(0, n2d, 2)])
 
       print()
       print(waffle)
       print("      " + " ".join([word for word in w]))
       print()
+
 
 
 # prevent symmetrically identical puzzles by doing the first two words here to enforce w1 < w2,

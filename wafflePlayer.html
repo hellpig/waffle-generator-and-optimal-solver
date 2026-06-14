@@ -216,7 +216,7 @@ function check_input_validity() {
         }
     }
 
-    if (sol == puz) {
+    if (sol.join('') == puz.join('')) {
         stop_playing("puzzle is already solved!?");
         return;
     }
@@ -265,6 +265,10 @@ for (let wordNum = 0; wordNum < full; wordNum++) {
 // this remove() function should ideally already exist in JavaScript
 function remove_letter_from_array(array, letter) {
     const ind = array.indexOf(letter);
+    if (ind < 0) {
+        console.error("Tried to remove missing letter", letter, array);
+        return;
+    }
     array[ind] = array[array.length - 1];
     array.pop();
 }
@@ -298,7 +302,7 @@ const white  = 4;
 
 // Initialize board[col + n1*row], the main state variable
 const board = new Uint32Array(size);    // Uint8Array would work too
-let progress = 0;    // game is over when this equals size
+let progress = 0;    // game is over when this equals size; holes in waffle count towards progress
 for (let i = 0; i < size; i++) {
     if ( puz[i] == " " ) {
         progress++;
@@ -506,6 +510,9 @@ let moving = null;
 function pickup(event) {
     event.preventDefault();
 
+    if (!(event.target.className == "white" || event.target.className == "yellow")) {
+        return;
+    }
     moving = event.target;
 
     moving.style.position = 'fixed';
@@ -542,14 +549,14 @@ function drop(event) {
         } else {
             target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
         }
-/*
-        if (target.childElementCount) {  // to handle placing back on itself
+
+        if (target && target.className == "container" && target.firstElementChild) {
             target = target.firstElementChild;
         }
-*/
+
 
         //console.log(target.id);
-        if ( playing && (target.className == 'white' || target.className == 'yellow') ) {  // not 'container' or anything else
+        if ( target && playing && (target.className == 'white' || target.className == 'yellow') ) {  // not 'container' or anything else
             swap( moving, target );
         }
 

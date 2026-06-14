@@ -205,7 +205,7 @@ function check_input_validity() {
         }
     }
 
-    if (sol == puz) {
+    if (sol.join('') == puz.join('')) {
         stop_playing("puzzle is already solved!?");
         return;
     }
@@ -250,6 +250,10 @@ for (let wordNum = 0; wordNum < n1+n2; wordNum++) {
 // this remove() function should ideally already exist in JavaScript
 function remove_letter_from_array(array, letter) {
     const ind = array.indexOf(letter);
+    if (ind < 0) {
+        console.error("Tried to remove missing letter", letter, array);
+        return;
+    }
     array[ind] = array[array.length - 1];
     array.pop();
 }
@@ -459,6 +463,9 @@ let moving = null;
 function pickup(event) {
     event.preventDefault();
 
+    if (!(event.target.className == "white" || event.target.className == "yellow")) {
+        return;
+    }
     moving = event.target;
 
     moving.style.position = 'fixed';
@@ -495,14 +502,13 @@ function drop(event) {
         } else {
             target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
         }
-/*
-        if (target.childElementCount) {  // to handle placing back on itself
+
+        if (target && target.className == "container" && target.firstElementChild) {
             target = target.firstElementChild;
         }
-*/
 
         //console.log(target.id);
-        if ( playing && (target.className == 'white' || target.className == 'yellow') ) {  // not 'container' or anything else
+        if ( target && playing && (target.className == 'white' || target.className == 'yellow') ) {  // not 'container' or anything else
             swap( moving, target );
         }
 

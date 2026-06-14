@@ -362,6 +362,7 @@ def loop_recursive(w, n):
         if letters.count(i) != countsAll[i]:
           return
 
+      # overwrite any previous solution (old solutions have been printed)
       solution = '\n'.join([w[i] for i in range(0,n2d,2)])
 
       print()
@@ -472,7 +473,7 @@ def swapSafe():
       if i!=j:
         printSwap(letters_list[i], letters_list[j], i, j)
         swaps += 1
-        letters_list[j] = letters_list[i]   # swap
+        letters_list[j] = letters_list[i]   # swap; no need to update letters_list[i] because it will be deleted
 
       # remove the now green letter
       toDelete.append(letter)

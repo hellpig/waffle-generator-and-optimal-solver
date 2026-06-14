@@ -541,6 +541,7 @@ def loop_recursive(w, n):
         if letters.count(i) != countsAll[i]:
           return
 
+      # overwrite any previous solution (old solutions have been printed)
       solution = ''.join(["\n"+" ".join( [w[j][i] for j in range(1,n1p,2)] )+"\n" if i&1 else w[i] for i in range(n2)])  # oof
 
       print()
@@ -651,7 +652,7 @@ def swapSafe():
       if i!=j:
         printSwap(letters_list[i], letters_list[j], i, j)
         swaps += 1
-        letters_list[j] = letters_list[i]   # swap
+        letters_list[j] = letters_list[i]   # swap; no need to update letters_list[i] because it will be deleted
 
       # remove the now green letter
       toDelete.append(letter)
@@ -674,6 +675,114 @@ def swapSafe():
       waffleIndices.pop(i)
 
   return swaps
+
+
+
+
+# The following is optional but safe.
+# If every remaining target spot for a letter contains the same wrong letter,
+# then all instances of that letter can be swapped into their correct positions.
+#
+# Example:
+#   solution_list has A A in two spots
+#   letters_list  has B B in those same spots
+# Then every A can safely be swapped into one of those A-spots.
+#
+# This function technically could also be coded to do what swapSafe() does,
+#   but swapSafe is faster and cleaner. Though, comment the 2 labeled lines
+#   if you want to not need swapSafe.
+#   swapSafe does NOT need to be called before this.
+#
+# Modifies: solution_list, letters_list, counts, and waffleIndices
+def swapForcedSameSource():
+
+  swaps = 0
+
+  def rebuildCounts():
+    counts.clear()
+    for letter in solution_list:
+      if letter in counts:
+        counts[letter] += 1
+      else:
+        counts[letter] = 1
+
+  def cleanupGreens():
+    # remove any letters that are already solved
+    for i in range(len(letters_list)-1, -1, -1):
+      if letters_list[i] == solution_list[i]:
+        letters_list.pop(i)
+        solution_list.pop(i)
+        waffleIndices.pop(i)
+
+    rebuildCounts()
+
+  # make sure counts is accurate
+  rebuildCounts()
+
+  while True:
+
+    didSomething = False
+
+    for letter in list(counts):
+
+      # swapSafe() already handles letters with only one remaining instance
+      if counts[letter] <= 1:
+        continue
+
+      # Find every location where this letter belongs.
+      targetIndices = []
+      for i in range(len(solution_list)):
+        if solution_list[i] == letter:
+          targetIndices.append(i)
+
+      # What letters are currently sitting in those target locations?
+      targetLetters = set()
+      for i in targetIndices:
+        targetLetters.add(letters_list[i])
+
+      # This trick only works if all target locations contain the same wrong letter.
+      if len(targetLetters) != 1:
+        continue
+
+      sourceLetter = next(iter(targetLetters))
+
+      # This should already be impossible if greens were cleaned up,
+      # but leave it here for safety.
+      if sourceLetter == letter:
+        continue
+
+      # Find every current instance of the letter.
+      sourceIndices = []
+      for i in range(len(letters_list)):
+        if letters_list[i] == letter:
+          sourceIndices.append(i)
+
+      # This should always be true if letters_list and solution_list have
+      # the same multiset of letters.
+      if len(sourceIndices) != len(targetIndices):
+        continue
+
+      # Swap each current instance of letter into one of its target locations.
+      # The pairing does not matter because all target locations contain sourceLetter.
+      for i, j in zip(targetIndices, sourceIndices):
+        printSwap(letters_list[i], letters_list[j], i, j)
+        swaps += 1
+
+        # We do not really need to put letter at index i because index i
+        # will become green and be removed. But doing the full-looking swap
+        # makes the logic easier to read.
+        letters_list[j] = letters_list[i]
+        letters_list[i] = letter
+
+      cleanupGreens()
+      didSomething = True
+      break   # restart because the lists and counts have changed
+
+    if not didSomething:
+      break
+
+  return swaps
+
 
 
 
@@ -848,47 +957,58 @@ def permuteToGetMinSwaps():
 
 
 
-# Requires letters_list and solution_list
+
+
+# Requires letters_list and solution_list, which are the remaining letters to be solved
+# and the proper placement of those remaining letters, respectively
+#
+# Assumes swapToTwoGreens() was called immediately before this function,
+# so no 2-cycles remain.
 
 def findCyclesToGetMinSwaps():
 
   leng = len(letters_list)
 
   # the following is explicitly needed because Python's max() doesn't like empty lists
-  if leng==0:
+  if leng == 0:
     return 0
 
 
   ### find and print all the cycles
 
-  def loop_recursive_cycles(cyc, depth):
-    # "globals": n, leng, cycle[], and cycles[]
+  def canonicalCycle(cyc):
+    # A cycle can be written starting from any point.
+    # This gives one standard version so repeats can be checked with a set.
+    cycTuple = tuple(cyc)
+    return min(cycTuple[i:] + cycTuple[:i] for i in range(len(cycTuple)))
+
+
+  def loop_recursive_cycles(cyc, depth, history):
+    # "globals": n, leng, cycles_seen, and cyclesGood
 
     # did you find a cycle that has not yet been found?
-    if cyc[-1][0]==cyc[0][1] and cyc not in cycles:
-      cyclesGood.append(cyc[:])
-      cycles.append(cyc[:])
-      for c in range(depth-1):
-          cyc.append(cyc.pop(0))  # cycle the cycle
-          cycles.append(cyc[:])
+    if cyc[-1][0] == cyc[0][1]:
+      key = canonicalCycle(cyc)
+      if key not in cycles_seen:
+        cycles_seen.add(key)
+        cyclesGood.append(cyc[:])
       return
 
-    if depth < leng-n:
-
-      history = [i[0] for i in cyc]  # remove solution from puzzle
+    if depth < leng - n:
 
       for j in zip(letters_list[n+1:], solution_list[n+1:]):
 
         if j[1] != cyc[-1][0] or j[0] in history:
           continue
 
-        loop_recursive_cycles(cyc + [j], depth+1)
-    
-  cycles = []      # to not collect repeats
-  cyclesGood = []  # will list all the cycles
+        loop_recursive_cycles(cyc + [j], depth+1, history | {j[0]})
 
-  for n,i in enumerate(zip(letters_list[:-1], solution_list[:-1])):
-    loop_recursive_cycles([i],1)
+
+  cycles_seen = set()  # to not collect repeats
+  cyclesGood = []      # will list all the cycles
+
+  for n, i in enumerate(zip(letters_list[:-1], solution_list[:-1])):
+    loop_recursive_cycles([i], 1, {i[0]})
 
   # sort by length to speed up later code a bit
   cyclesGood = sorted(cyclesGood, key=len)
@@ -903,12 +1023,26 @@ def findCyclesToGetMinSwaps():
 
   ### go through cycles and fit them together in every possible way
 
-  def loop_recursive_combine_cycles(cycList, currentSituation):
-    # "globals": cycListAll[]
+  best = []   # best list of cycle indices found so far
 
-    # did you find a combination that has not yet been found?
-    if len(currentSituation)==0 and cycList not in cycListAll:
-      cycListAll.append(cycList[:])
+  # If swapToTwoGreens() has already removed all 2-cycles, then every remaining cycle
+  # has length at least 3. If you are not 100% sure of that, change this to 2.
+  minCycleLengthLeft = 3
+
+  def loop_recursive_combine_cycles(cycList, currentSituation):
+    # "globals": best
+
+    nonlocal best
+
+    # did you complete the puzzle?
+    if len(currentSituation) == 0:
+      if len(cycList) > len(best):
+        best = cycList[:]
+      return
+
+    # Branch-and-bound:
+    # even in the best case, the remaining letters can create at most this many cycles.
+    if len(cycList) + len(currentSituation) // minCycleLengthLeft <= len(best):
       return
 
     index = cycList[-1] - 1
@@ -923,41 +1057,41 @@ def findCyclesToGetMinSwaps():
       try:
         for j in cyc:
           currentSituationNew.remove(j)
-      except:
+      except ValueError:
         continue   # cyc could not be removed
 
       loop_recursive_combine_cycles(cycList + [index], currentSituationNew)
 
-  cycListAll = []   # to collect combinations of cycles
 
-  for i,cyc in enumerate(cyclesGood):
+  for i, cyc in enumerate(cyclesGood):
 
     # convert to a different data structure
-    currentSituation = list(zip( letters_list, solution_list ))
+    currentSituation = list(zip(letters_list, solution_list))
 
     # remove cyc
-    for j in cyc:
-      currentSituation.remove(j)
+    try:
+      for j in cyc:
+        currentSituation.remove(j)
+    except ValueError:
+      continue
 
     loop_recursive_combine_cycles([i], currentSituation)
 
   # optionally print
-  #for l in cycListAll:
-  #  print()
-  #  print(l)
-  #  print("swaps =", leng - len(l) )
+  #print()
+  #print(best)
+  #print("swaps =", leng - len(best))
 
 
 
   # print best
-  best = max(cycListAll, key=len)
-  combined = list( zip(letters_list, solution_list) )
+  combined = list(zip(letters_list, solution_list))
   for i in best:
 
     # make indexList[] for the cycle
     indexList = []
     for j in cyclesGood[i]:
-      indexList.append( combined.index(j) )
+      indexList.append(combined.index(j))
 
     pivotIndex = indexList[0]
     pivotValue = combined[pivotIndex][0]   # pivotValue will change
@@ -979,12 +1113,19 @@ def findCyclesToGetMinSwaps():
 
 
 
+
+
+
+
 ######## do everything!
 
 swaps = 0
+
+# perhaps instead put the first 3 in a loop until no new changes are made, though that seems extreme!
 swaps += swapToTwoGreens()
 swaps += swapSafe()
-#swaps += swapToTwoGreens()   # can be helpful to keep alternating between strategies!
+swaps += swapForcedSameSource()
+swaps += swapToTwoGreens()   # swapToTwoGreens must be called immediately before findCyclesToGetMinSwaps
 
 #print("".join(letters_list))
 #print("".join(solution_list))

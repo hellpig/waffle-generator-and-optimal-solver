@@ -526,7 +526,7 @@ def get_optimal_swaps(greenMaskAll, lettersAll):
 
         if i!=j:
           swaps += 1
-          letters_list[j] = letters_list[i]   # swap
+          letters_list[j] = letters_list[i]   # swap; no need to update letters_list[i] because it will be deleted
 
         # remove the now green letter
         toDelete.append(letter)
